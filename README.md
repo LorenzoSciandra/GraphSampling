@@ -1,6 +1,6 @@
 # Graph Sampling
 
-This notebook presents an implementation of all the methods described in the paper [A Survey and Taxonomy of Graph Sampling](https://arxiv.org/abs/1308.5865).
+The [notebook](graph_sampling.ipynb) presents an implementation of all the methods described in the paper [A Survey and Taxonomy of Graph Sampling](https://arxiv.org/abs/1308.5865) and this is a markdown version of it.
 
 
 ## Basic useful definitions
