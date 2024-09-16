@@ -358,7 +358,7 @@ def analyze_sampling(graph, title, node_dist=None):
 
 ## Vertex Sampling (VS)
 
-First $V_S\subset V$ nodes are sampled uniformly or in accordance with some distribution if knowledge about the domain is available and then $G_S=(V_S, E_S)$ is defined where $E_S \subset E$ is the set of all the edges we can take from $E$ such that they connect two nodes sampled in $V_S$. In our case we will use the distribution on the nodes:
+First $V_S \subset V$ nodes are sampled uniformly or in accordance with some distribution if knowledge about the domain is available and then $G_S=(V_S, E_S)$ is defined where $E_S \subset E$ is the set of all the edges we can take from $E$ such that they connect two nodes sampled in $V_S$. In our case we will use the distribution on the nodes:
 ``` math
 $$\pi_{v_i} = \frac{d_G(v_i)}{\sum_{v_k \in V} d_G(v_k)}$$
 ```
@@ -605,7 +605,19 @@ analyze_sampling(es_graph, "Edge Sampling")
 
 ## Vertex Sampling with Neighbourhood (VSN)
 
-We first sample $\tilde{V}_S \subset V$ nodes and then set $V_S = \tilde{V}_S \cup \bigcup_{v \in \tilde{V}_S} \mathcal{N}(v)$ equal to the union of the sampled nodes and their entire neighborhood. Consequently we will have that $E_S = \bigcup_{v \in \tilde{V}_S} \delta(v)$ is the set of all edges incident to all nodes in $\tilde{V}_S$.
+We first sample
+``` math
+$$\tilde{V}_S \subset V$$
+```
+nodes and then set
+``` math
+$$V_S = \tilde{V}_S \cup \bigcup_{v \in \tilde{V}_S} \mathcal{N}(v)$$
+```
+equal to the union of the sampled nodes and their entire neighborhood. Consequently we will have that 
+``` math
+$$E_S = \bigcup_{v \in \tilde{V}_S} \delta(v)$$
+```
+is the set of all edges incident to all nodes in $\tilde{V}_S$.
 
 
 ```python
