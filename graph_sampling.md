@@ -23,21 +23,6 @@ The dataset on which the sampling algorithms will be tested will be presented be
 ```python
 import os
 import torch
-
-os.environ['TORCH'] = torch.__version__
-
-!pip install -q torch-scatter -f https://data.pyg.org/whl/torch-${TORCH}.html
-!pip install -q torch-sparse -f https://data.pyg.org/whl/torch-${TORCH}.html
-!pip install -q git+https://github.com/pyg-team/pytorch_geometric.git
-```
-
-      Installing build dependencies ... [?25l[?25hdone
-      Getting requirements to build wheel ... [?25l[?25hdone
-      Preparing metadata (pyproject.toml) ... [?25l[?25hdone
-
-
-
-```python
 import collections
 import numpy as np
 import pandas as pd
@@ -63,7 +48,7 @@ The dataset contains a single graph $G$ made up of:
 
 
 ```python
-dataset = Planetoid("\..", "Cora")
+dataset = Planetoid("Datasets", "Cora")
 dataset._data
 ```
 
@@ -132,9 +117,7 @@ deg_distribution(graph)
 ```
 
 
-
-  <div id="df-06c153e3-dd94-4564-b82d-7c293afd15d6" class="colab-df-container">
-    <div>
+<div>
 <style scoped>
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;
@@ -177,94 +160,11 @@ deg_distribution(graph)
   </tbody>
 </table>
 </div>
-    <div class="colab-df-buttons">
-
-  <div class="colab-df-container">
-    <button class="colab-df-convert" onclick="convertToInteractive('df-06c153e3-dd94-4564-b82d-7c293afd15d6')"
-            title="Convert this dataframe to an interactive table."
-            style="display:none;">
-
-  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960">
-    <path d="M120-120v-720h720v720H120Zm60-500h600v-160H180v160Zm220 220h160v-160H400v160Zm0 220h160v-160H400v160ZM180-400h160v-160H180v160Zm440 0h160v-160H620v160ZM180-180h160v-160H180v160Zm440 0h160v-160H620v160Z"/>
-  </svg>
-    </button>
-
-  <style>
-    .colab-df-container {
-      display:flex;
-      gap: 12px;
-    }
-
-    .colab-df-convert {
-      background-color: #E8F0FE;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      display: none;
-      fill: #1967D2;
-      height: 32px;
-      padding: 0 0 0 0;
-      width: 32px;
-    }
-
-    .colab-df-convert:hover {
-      background-color: #E2EBFA;
-      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);
-      fill: #174EA6;
-    }
-
-    .colab-df-buttons div {
-      margin-bottom: 4px;
-    }
-
-    [theme=dark] .colab-df-convert {
-      background-color: #3B4455;
-      fill: #D2E3FC;
-    }
-
-    [theme=dark] .colab-df-convert:hover {
-      background-color: #434B5C;
-      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
-      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));
-      fill: #FFFFFF;
-    }
-  </style>
-
-    <script>
-      const buttonEl =
-        document.querySelector('#df-06c153e3-dd94-4564-b82d-7c293afd15d6 button.colab-df-convert');
-      buttonEl.style.display =
-        google.colab.kernel.accessAllowed ? 'block' : 'none';
-
-      async function convertToInteractive(key) {
-        const element = document.querySelector('#df-06c153e3-dd94-4564-b82d-7c293afd15d6');
-        const dataTable =
-          await google.colab.kernel.invokeFunction('convertToInteractive',
-                                                    [key], {});
-        if (!dataTable) return;
-
-        const docLinkHtml = 'Like what you see? Visit the ' +
-          '<a target="_blank" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'
-          + ' to learn more about interactive tables.';
-        element.innerHTML = '';
-        dataTable['output_type'] = 'display_data';
-        await google.colab.output.renderOutput(dataTable, element);
-        const docLink = document.createElement('div');
-        docLink.innerHTML = docLinkHtml;
-        element.appendChild(docLink);
-      }
-    </script>
-  </div>
-
-
-    </div>
-  </div>
-
 
 
 
     
-![png](graph_sampling_files/graph_sampling_11_1.png)
+![png](graph_sampling_files/graph_sampling_10_1.png)
     
 
 
@@ -303,7 +203,7 @@ class_distribution(graph, label_dict)
 
 
     
-![png](graph_sampling_files/graph_sampling_14_0.png)
+![png](graph_sampling_files/graph_sampling_13_0.png)
     
 
 
@@ -361,7 +261,7 @@ homophily_plot(graph)
 
 
     
-![png](graph_sampling_files/graph_sampling_17_0.png)
+![png](graph_sampling_files/graph_sampling_16_0.png)
     
 
 
@@ -401,7 +301,7 @@ visualize_graph(graph, "Cora Dataset")
 
 
     
-![png](graph_sampling_files/graph_sampling_20_0.png)
+![png](graph_sampling_files/graph_sampling_19_0.png)
     
 
 
@@ -506,22 +406,20 @@ analyze_sampling(vs_graph, "Vertex Sampling")
 ```
 
     Number of nodes: 812
-    Number of edges: 2140
+    Number of edges: 2170
     Has isolated nodes: True
     Has self-loops: False
     Is undirected: True
-    Average node degree: 2.64
+    Average node degree: 2.67
     Number of classes: 7
-    Number of connected components: 137
-    Average clustering coefficient: 0.17520
-    Density: 0.00325
-    Transitivity: 0.11042
+    Number of connected components: 144
+    Average clustering coefficient: 0.20278
+    Density: 0.00330
+    Transitivity: 0.11609
 
 
 
-
-  <div id="df-d6bbc01c-00f9-4fc5-b66f-571b2d00d317" class="colab-df-container">
-    <div>
+<div>
 <style scoped>
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;
@@ -553,123 +451,40 @@ analyze_sampling(vs_graph, "Vertex Sampling")
     <tr>
       <th>0</th>
       <td>812.0</td>
-      <td>2.64</td>
-      <td>3.56</td>
+      <td>2.67</td>
+      <td>3.7</td>
       <td>0.0</td>
       <td>1.0</td>
       <td>2.0</td>
       <td>3.0</td>
-      <td>68.0</td>
+      <td>72.0</td>
     </tr>
   </tbody>
 </table>
 </div>
-    <div class="colab-df-buttons">
-
-  <div class="colab-df-container">
-    <button class="colab-df-convert" onclick="convertToInteractive('df-d6bbc01c-00f9-4fc5-b66f-571b2d00d317')"
-            title="Convert this dataframe to an interactive table."
-            style="display:none;">
-
-  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960">
-    <path d="M120-120v-720h720v720H120Zm60-500h600v-160H180v160Zm220 220h160v-160H400v160Zm0 220h160v-160H400v160ZM180-400h160v-160H180v160Zm440 0h160v-160H620v160ZM180-180h160v-160H180v160Zm440 0h160v-160H620v160Z"/>
-  </svg>
-    </button>
-
-  <style>
-    .colab-df-container {
-      display:flex;
-      gap: 12px;
-    }
-
-    .colab-df-convert {
-      background-color: #E8F0FE;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      display: none;
-      fill: #1967D2;
-      height: 32px;
-      padding: 0 0 0 0;
-      width: 32px;
-    }
-
-    .colab-df-convert:hover {
-      background-color: #E2EBFA;
-      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);
-      fill: #174EA6;
-    }
-
-    .colab-df-buttons div {
-      margin-bottom: 4px;
-    }
-
-    [theme=dark] .colab-df-convert {
-      background-color: #3B4455;
-      fill: #D2E3FC;
-    }
-
-    [theme=dark] .colab-df-convert:hover {
-      background-color: #434B5C;
-      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
-      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));
-      fill: #FFFFFF;
-    }
-  </style>
-
-    <script>
-      const buttonEl =
-        document.querySelector('#df-d6bbc01c-00f9-4fc5-b66f-571b2d00d317 button.colab-df-convert');
-      buttonEl.style.display =
-        google.colab.kernel.accessAllowed ? 'block' : 'none';
-
-      async function convertToInteractive(key) {
-        const element = document.querySelector('#df-d6bbc01c-00f9-4fc5-b66f-571b2d00d317');
-        const dataTable =
-          await google.colab.kernel.invokeFunction('convertToInteractive',
-                                                    [key], {});
-        if (!dataTable) return;
-
-        const docLinkHtml = 'Like what you see? Visit the ' +
-          '<a target="_blank" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'
-          + ' to learn more about interactive tables.';
-        element.innerHTML = '';
-        dataTable['output_type'] = 'display_data';
-        await google.colab.output.renderOutput(dataTable, element);
-        const docLink = document.createElement('div');
-        docLink.innerHTML = docLinkHtml;
-        element.appendChild(docLink);
-      }
-    </script>
-  </div>
-
-
-    </div>
-  </div>
-
 
 
 
     
-![png](graph_sampling_files/graph_sampling_29_2.png)
+![png](graph_sampling_files/graph_sampling_28_2.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_29_3.png)
+![png](graph_sampling_files/graph_sampling_28_3.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_29_4.png)
+![png](graph_sampling_files/graph_sampling_28_4.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_29_5.png)
+![png](graph_sampling_files/graph_sampling_28_5.png)
     
 
 
@@ -744,23 +559,21 @@ es_graph = edge_sampling(graph, num_sample_edges)
 analyze_sampling(es_graph, "Edge Sampling")
 ```
 
-    Number of nodes: 656
+    Number of nodes: 639
     Number of edges: 1054
     Has isolated nodes: False
     Has self-loops: False
     Is undirected: True
-    Average node degree: 1.61
+    Average node degree: 1.65
     Number of classes: 7
-    Number of connected components: 142
-    Average clustering coefficient: 0.00809
-    Density: 0.00245
-    Transitivity: 0.00238
+    Number of connected components: 132
+    Average clustering coefficient: 0.01448
+    Density: 0.00259
+    Transitivity: 0.00383
 
 
 
-
-  <div id="df-6cc1986b-655e-450d-ba01-4a33bb696e2f" class="colab-df-container">
-    <div>
+<div>
 <style scoped>
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;
@@ -791,124 +604,41 @@ analyze_sampling(es_graph, "Edge Sampling")
   <tbody>
     <tr>
       <th>0</th>
-      <td>656.0</td>
-      <td>1.61</td>
-      <td>3.79</td>
+      <td>639.0</td>
+      <td>1.65</td>
+      <td>4.31</td>
       <td>1.0</td>
       <td>1.0</td>
       <td>1.0</td>
       <td>1.0</td>
-      <td>87.0</td>
+      <td>95.0</td>
     </tr>
   </tbody>
 </table>
 </div>
-    <div class="colab-df-buttons">
-
-  <div class="colab-df-container">
-    <button class="colab-df-convert" onclick="convertToInteractive('df-6cc1986b-655e-450d-ba01-4a33bb696e2f')"
-            title="Convert this dataframe to an interactive table."
-            style="display:none;">
-
-  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960">
-    <path d="M120-120v-720h720v720H120Zm60-500h600v-160H180v160Zm220 220h160v-160H400v160Zm0 220h160v-160H400v160ZM180-400h160v-160H180v160Zm440 0h160v-160H620v160ZM180-180h160v-160H180v160Zm440 0h160v-160H620v160Z"/>
-  </svg>
-    </button>
-
-  <style>
-    .colab-df-container {
-      display:flex;
-      gap: 12px;
-    }
-
-    .colab-df-convert {
-      background-color: #E8F0FE;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      display: none;
-      fill: #1967D2;
-      height: 32px;
-      padding: 0 0 0 0;
-      width: 32px;
-    }
-
-    .colab-df-convert:hover {
-      background-color: #E2EBFA;
-      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);
-      fill: #174EA6;
-    }
-
-    .colab-df-buttons div {
-      margin-bottom: 4px;
-    }
-
-    [theme=dark] .colab-df-convert {
-      background-color: #3B4455;
-      fill: #D2E3FC;
-    }
-
-    [theme=dark] .colab-df-convert:hover {
-      background-color: #434B5C;
-      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
-      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));
-      fill: #FFFFFF;
-    }
-  </style>
-
-    <script>
-      const buttonEl =
-        document.querySelector('#df-6cc1986b-655e-450d-ba01-4a33bb696e2f button.colab-df-convert');
-      buttonEl.style.display =
-        google.colab.kernel.accessAllowed ? 'block' : 'none';
-
-      async function convertToInteractive(key) {
-        const element = document.querySelector('#df-6cc1986b-655e-450d-ba01-4a33bb696e2f');
-        const dataTable =
-          await google.colab.kernel.invokeFunction('convertToInteractive',
-                                                    [key], {});
-        if (!dataTable) return;
-
-        const docLinkHtml = 'Like what you see? Visit the ' +
-          '<a target="_blank" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'
-          + ' to learn more about interactive tables.';
-        element.innerHTML = '';
-        dataTable['output_type'] = 'display_data';
-        await google.colab.output.renderOutput(dataTable, element);
-        const docLink = document.createElement('div');
-        docLink.innerHTML = docLinkHtml;
-        element.appendChild(docLink);
-      }
-    </script>
-  </div>
-
-
-    </div>
-  </div>
-
 
 
 
     
-![png](graph_sampling_files/graph_sampling_33_2.png)
+![png](graph_sampling_files/graph_sampling_32_2.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_33_3.png)
+![png](graph_sampling_files/graph_sampling_32_3.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_33_4.png)
+![png](graph_sampling_files/graph_sampling_32_4.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_33_5.png)
+![png](graph_sampling_files/graph_sampling_32_5.png)
     
 
 
@@ -945,23 +675,21 @@ vsn_graph = vertex_sampling_neighbourhood(graph, num_samples_nodes)
 analyze_sampling(vsn_graph, "Vertex Sampling with Neighbourhood")
 ```
 
-    Number of nodes: 1037
-    Number of edges: 4132
+    Number of nodes: 1036
+    Number of edges: 4210
     Has isolated nodes: False
     Has self-loops: False
     Is undirected: True
-    Average node degree: 3.98
+    Average node degree: 4.06
     Number of classes: 7
-    Number of connected components: 13
-    Average clustering coefficient: 0.37280
-    Density: 0.00385
-    Transitivity: 0.07614
+    Number of connected components: 10
+    Average clustering coefficient: 0.35588
+    Density: 0.00393
+    Transitivity: 0.07445
 
 
 
-
-  <div id="df-74aca34b-9473-4f7a-9c3a-633cb9a2baae" class="colab-df-container">
-    <div>
+<div>
 <style scoped>
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;
@@ -992,9 +720,9 @@ analyze_sampling(vsn_graph, "Vertex Sampling with Neighbourhood")
   <tbody>
     <tr>
       <th>0</th>
-      <td>1037.0</td>
-      <td>3.98</td>
-      <td>7.07</td>
+      <td>1036.0</td>
+      <td>4.06</td>
+      <td>7.24</td>
       <td>1.0</td>
       <td>2.0</td>
       <td>3.0</td>
@@ -1004,112 +732,29 @@ analyze_sampling(vsn_graph, "Vertex Sampling with Neighbourhood")
   </tbody>
 </table>
 </div>
-    <div class="colab-df-buttons">
-
-  <div class="colab-df-container">
-    <button class="colab-df-convert" onclick="convertToInteractive('df-74aca34b-9473-4f7a-9c3a-633cb9a2baae')"
-            title="Convert this dataframe to an interactive table."
-            style="display:none;">
-
-  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960">
-    <path d="M120-120v-720h720v720H120Zm60-500h600v-160H180v160Zm220 220h160v-160H400v160Zm0 220h160v-160H400v160ZM180-400h160v-160H180v160Zm440 0h160v-160H620v160ZM180-180h160v-160H180v160Zm440 0h160v-160H620v160Z"/>
-  </svg>
-    </button>
-
-  <style>
-    .colab-df-container {
-      display:flex;
-      gap: 12px;
-    }
-
-    .colab-df-convert {
-      background-color: #E8F0FE;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      display: none;
-      fill: #1967D2;
-      height: 32px;
-      padding: 0 0 0 0;
-      width: 32px;
-    }
-
-    .colab-df-convert:hover {
-      background-color: #E2EBFA;
-      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);
-      fill: #174EA6;
-    }
-
-    .colab-df-buttons div {
-      margin-bottom: 4px;
-    }
-
-    [theme=dark] .colab-df-convert {
-      background-color: #3B4455;
-      fill: #D2E3FC;
-    }
-
-    [theme=dark] .colab-df-convert:hover {
-      background-color: #434B5C;
-      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
-      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));
-      fill: #FFFFFF;
-    }
-  </style>
-
-    <script>
-      const buttonEl =
-        document.querySelector('#df-74aca34b-9473-4f7a-9c3a-633cb9a2baae button.colab-df-convert');
-      buttonEl.style.display =
-        google.colab.kernel.accessAllowed ? 'block' : 'none';
-
-      async function convertToInteractive(key) {
-        const element = document.querySelector('#df-74aca34b-9473-4f7a-9c3a-633cb9a2baae');
-        const dataTable =
-          await google.colab.kernel.invokeFunction('convertToInteractive',
-                                                    [key], {});
-        if (!dataTable) return;
-
-        const docLinkHtml = 'Like what you see? Visit the ' +
-          '<a target="_blank" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'
-          + ' to learn more about interactive tables.';
-        element.innerHTML = '';
-        dataTable['output_type'] = 'display_data';
-        await google.colab.output.renderOutput(dataTable, element);
-        const docLink = document.createElement('div');
-        docLink.innerHTML = docLinkHtml;
-        element.appendChild(docLink);
-      }
-    </script>
-  </div>
-
-
-    </div>
-  </div>
-
 
 
 
     
-![png](graph_sampling_files/graph_sampling_37_2.png)
+![png](graph_sampling_files/graph_sampling_36_2.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_37_3.png)
+![png](graph_sampling_files/graph_sampling_36_3.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_37_4.png)
+![png](graph_sampling_files/graph_sampling_36_4.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_37_5.png)
+![png](graph_sampling_files/graph_sampling_36_5.png)
     
 
 
@@ -1211,9 +856,7 @@ analyze_sampling(bfs_graph, "Breadth First Sampling")
 
 
 
-
-  <div id="df-38bf1d52-156f-45da-9cb7-e8385c54aee9" class="colab-df-container">
-    <div>
+<div>
 <style scoped>
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;
@@ -1246,122 +889,39 @@ analyze_sampling(bfs_graph, "Breadth First Sampling")
       <th>0</th>
       <td>812.0</td>
       <td>2.0</td>
-      <td>6.01</td>
+      <td>6.34</td>
       <td>1.0</td>
       <td>1.0</td>
       <td>1.0</td>
-      <td>1.0</td>
-      <td>156.0</td>
+      <td>1.25</td>
+      <td>161.0</td>
     </tr>
   </tbody>
 </table>
 </div>
-    <div class="colab-df-buttons">
-
-  <div class="colab-df-container">
-    <button class="colab-df-convert" onclick="convertToInteractive('df-38bf1d52-156f-45da-9cb7-e8385c54aee9')"
-            title="Convert this dataframe to an interactive table."
-            style="display:none;">
-
-  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960">
-    <path d="M120-120v-720h720v720H120Zm60-500h600v-160H180v160Zm220 220h160v-160H400v160Zm0 220h160v-160H400v160ZM180-400h160v-160H180v160Zm440 0h160v-160H620v160ZM180-180h160v-160H180v160Zm440 0h160v-160H620v160Z"/>
-  </svg>
-    </button>
-
-  <style>
-    .colab-df-container {
-      display:flex;
-      gap: 12px;
-    }
-
-    .colab-df-convert {
-      background-color: #E8F0FE;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      display: none;
-      fill: #1967D2;
-      height: 32px;
-      padding: 0 0 0 0;
-      width: 32px;
-    }
-
-    .colab-df-convert:hover {
-      background-color: #E2EBFA;
-      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);
-      fill: #174EA6;
-    }
-
-    .colab-df-buttons div {
-      margin-bottom: 4px;
-    }
-
-    [theme=dark] .colab-df-convert {
-      background-color: #3B4455;
-      fill: #D2E3FC;
-    }
-
-    [theme=dark] .colab-df-convert:hover {
-      background-color: #434B5C;
-      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
-      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));
-      fill: #FFFFFF;
-    }
-  </style>
-
-    <script>
-      const buttonEl =
-        document.querySelector('#df-38bf1d52-156f-45da-9cb7-e8385c54aee9 button.colab-df-convert');
-      buttonEl.style.display =
-        google.colab.kernel.accessAllowed ? 'block' : 'none';
-
-      async function convertToInteractive(key) {
-        const element = document.querySelector('#df-38bf1d52-156f-45da-9cb7-e8385c54aee9');
-        const dataTable =
-          await google.colab.kernel.invokeFunction('convertToInteractive',
-                                                    [key], {});
-        if (!dataTable) return;
-
-        const docLinkHtml = 'Like what you see? Visit the ' +
-          '<a target="_blank" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'
-          + ' to learn more about interactive tables.';
-        element.innerHTML = '';
-        dataTable['output_type'] = 'display_data';
-        await google.colab.output.renderOutput(dataTable, element);
-        const docLink = document.createElement('div');
-        docLink.innerHTML = docLinkHtml;
-        element.appendChild(docLink);
-      }
-    </script>
-  </div>
-
-
-    </div>
-  </div>
-
 
 
 
     
-![png](graph_sampling_files/graph_sampling_42_2.png)
+![png](graph_sampling_files/graph_sampling_41_2.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_42_3.png)
+![png](graph_sampling_files/graph_sampling_41_3.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_42_4.png)
+![png](graph_sampling_files/graph_sampling_41_4.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_42_5.png)
+![png](graph_sampling_files/graph_sampling_41_5.png)
     
 
 
@@ -1389,9 +949,7 @@ analyze_sampling(depth_graph, "Depth First Sampling")
 
 
 
-
-  <div id="df-c46f4db7-b753-4590-bfc5-593e323c79b2" class="colab-df-container">
-    <div>
+<div>
 <style scoped>
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;
@@ -1429,117 +987,34 @@ analyze_sampling(depth_graph, "Depth First Sampling")
       <td>1.0</td>
       <td>2.0</td>
       <td>2.0</td>
-      <td>18.0</td>
+      <td>25.0</td>
     </tr>
   </tbody>
 </table>
 </div>
-    <div class="colab-df-buttons">
-
-  <div class="colab-df-container">
-    <button class="colab-df-convert" onclick="convertToInteractive('df-c46f4db7-b753-4590-bfc5-593e323c79b2')"
-            title="Convert this dataframe to an interactive table."
-            style="display:none;">
-
-  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960">
-    <path d="M120-120v-720h720v720H120Zm60-500h600v-160H180v160Zm220 220h160v-160H400v160Zm0 220h160v-160H400v160ZM180-400h160v-160H180v160Zm440 0h160v-160H620v160ZM180-180h160v-160H180v160Zm440 0h160v-160H620v160Z"/>
-  </svg>
-    </button>
-
-  <style>
-    .colab-df-container {
-      display:flex;
-      gap: 12px;
-    }
-
-    .colab-df-convert {
-      background-color: #E8F0FE;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      display: none;
-      fill: #1967D2;
-      height: 32px;
-      padding: 0 0 0 0;
-      width: 32px;
-    }
-
-    .colab-df-convert:hover {
-      background-color: #E2EBFA;
-      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);
-      fill: #174EA6;
-    }
-
-    .colab-df-buttons div {
-      margin-bottom: 4px;
-    }
-
-    [theme=dark] .colab-df-convert {
-      background-color: #3B4455;
-      fill: #D2E3FC;
-    }
-
-    [theme=dark] .colab-df-convert:hover {
-      background-color: #434B5C;
-      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
-      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));
-      fill: #FFFFFF;
-    }
-  </style>
-
-    <script>
-      const buttonEl =
-        document.querySelector('#df-c46f4db7-b753-4590-bfc5-593e323c79b2 button.colab-df-convert');
-      buttonEl.style.display =
-        google.colab.kernel.accessAllowed ? 'block' : 'none';
-
-      async function convertToInteractive(key) {
-        const element = document.querySelector('#df-c46f4db7-b753-4590-bfc5-593e323c79b2');
-        const dataTable =
-          await google.colab.kernel.invokeFunction('convertToInteractive',
-                                                    [key], {});
-        if (!dataTable) return;
-
-        const docLinkHtml = 'Like what you see? Visit the ' +
-          '<a target="_blank" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'
-          + ' to learn more about interactive tables.';
-        element.innerHTML = '';
-        dataTable['output_type'] = 'display_data';
-        await google.colab.output.renderOutput(dataTable, element);
-        const docLink = document.createElement('div');
-        docLink.innerHTML = docLinkHtml;
-        element.appendChild(docLink);
-      }
-    </script>
-  </div>
-
-
-    </div>
-  </div>
-
 
 
 
     
-![png](graph_sampling_files/graph_sampling_44_2.png)
+![png](graph_sampling_files/graph_sampling_43_2.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_44_3.png)
+![png](graph_sampling_files/graph_sampling_43_3.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_44_4.png)
+![png](graph_sampling_files/graph_sampling_43_4.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_44_5.png)
+![png](graph_sampling_files/graph_sampling_43_5.png)
     
 
 
@@ -1567,9 +1042,7 @@ analyze_sampling(rfs_graph, "Random First Sampling")
 
 
 
-
-  <div id="df-f8633b5c-6bbf-472f-a3bb-ab7a2642edd2" class="colab-df-container">
-    <div>
+<div>
 <style scoped>
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;
@@ -1602,122 +1075,39 @@ analyze_sampling(rfs_graph, "Random First Sampling")
       <th>0</th>
       <td>812.0</td>
       <td>2.0</td>
-      <td>3.5</td>
+      <td>2.8</td>
       <td>1.0</td>
       <td>1.0</td>
       <td>1.0</td>
       <td>2.0</td>
-      <td>65.0</td>
+      <td>35.0</td>
     </tr>
   </tbody>
 </table>
 </div>
-    <div class="colab-df-buttons">
-
-  <div class="colab-df-container">
-    <button class="colab-df-convert" onclick="convertToInteractive('df-f8633b5c-6bbf-472f-a3bb-ab7a2642edd2')"
-            title="Convert this dataframe to an interactive table."
-            style="display:none;">
-
-  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960">
-    <path d="M120-120v-720h720v720H120Zm60-500h600v-160H180v160Zm220 220h160v-160H400v160Zm0 220h160v-160H400v160ZM180-400h160v-160H180v160Zm440 0h160v-160H620v160ZM180-180h160v-160H180v160Zm440 0h160v-160H620v160Z"/>
-  </svg>
-    </button>
-
-  <style>
-    .colab-df-container {
-      display:flex;
-      gap: 12px;
-    }
-
-    .colab-df-convert {
-      background-color: #E8F0FE;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      display: none;
-      fill: #1967D2;
-      height: 32px;
-      padding: 0 0 0 0;
-      width: 32px;
-    }
-
-    .colab-df-convert:hover {
-      background-color: #E2EBFA;
-      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);
-      fill: #174EA6;
-    }
-
-    .colab-df-buttons div {
-      margin-bottom: 4px;
-    }
-
-    [theme=dark] .colab-df-convert {
-      background-color: #3B4455;
-      fill: #D2E3FC;
-    }
-
-    [theme=dark] .colab-df-convert:hover {
-      background-color: #434B5C;
-      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
-      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));
-      fill: #FFFFFF;
-    }
-  </style>
-
-    <script>
-      const buttonEl =
-        document.querySelector('#df-f8633b5c-6bbf-472f-a3bb-ab7a2642edd2 button.colab-df-convert');
-      buttonEl.style.display =
-        google.colab.kernel.accessAllowed ? 'block' : 'none';
-
-      async function convertToInteractive(key) {
-        const element = document.querySelector('#df-f8633b5c-6bbf-472f-a3bb-ab7a2642edd2');
-        const dataTable =
-          await google.colab.kernel.invokeFunction('convertToInteractive',
-                                                    [key], {});
-        if (!dataTable) return;
-
-        const docLinkHtml = 'Like what you see? Visit the ' +
-          '<a target="_blank" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'
-          + ' to learn more about interactive tables.';
-        element.innerHTML = '';
-        dataTable['output_type'] = 'display_data';
-        await google.colab.output.renderOutput(dataTable, element);
-        const docLink = document.createElement('div');
-        docLink.innerHTML = docLinkHtml;
-        element.appendChild(docLink);
-      }
-    </script>
-  </div>
-
-
-    </div>
-  </div>
-
 
 
 
     
-![png](graph_sampling_files/graph_sampling_46_2.png)
+![png](graph_sampling_files/graph_sampling_45_2.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_46_3.png)
+![png](graph_sampling_files/graph_sampling_45_3.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_46_4.png)
+![png](graph_sampling_files/graph_sampling_45_4.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_46_5.png)
+![png](graph_sampling_files/graph_sampling_45_5.png)
     
 
 
@@ -1825,23 +1215,21 @@ sbs_graph, node_dist_dict = snow_ball_sampling(graph, num_samples_nodes, 8, 3)
 analyze_sampling(sbs_graph, "Snow-Ball Sampling", node_dist_dict)
 ```
 
-    Number of nodes: 926
-    Number of edges: 3300
+    Number of nodes: 801
+    Number of edges: 2632
     Has isolated nodes: False
     Has self-loops: False
     Is undirected: True
-    Average node degree: 3.56
+    Average node degree: 3.29
     Number of classes: 7
     Number of connected components: 1
-    Average clustering coefficient: 0.18787
-    Density: 0.00385
-    Transitivity: 0.13182
+    Average clustering coefficient: 0.15118
+    Density: 0.00411
+    Transitivity: 0.12331
 
 
 
-
-  <div id="df-6e9c53fe-53da-43bb-9930-e5bfde90bcf7" class="colab-df-container">
-    <div>
+<div>
 <style scoped>
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;
@@ -1872,130 +1260,47 @@ analyze_sampling(sbs_graph, "Snow-Ball Sampling", node_dist_dict)
   <tbody>
     <tr>
       <th>0</th>
-      <td>926.0</td>
-      <td>3.56</td>
-      <td>2.9</td>
+      <td>801.0</td>
+      <td>3.29</td>
+      <td>2.56</td>
       <td>1.0</td>
-      <td>3.0</td>
+      <td>2.0</td>
       <td>3.0</td>
       <td>4.0</td>
-      <td>62.0</td>
+      <td>47.0</td>
     </tr>
   </tbody>
 </table>
 </div>
-    <div class="colab-df-buttons">
-
-  <div class="colab-df-container">
-    <button class="colab-df-convert" onclick="convertToInteractive('df-6e9c53fe-53da-43bb-9930-e5bfde90bcf7')"
-            title="Convert this dataframe to an interactive table."
-            style="display:none;">
-
-  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960">
-    <path d="M120-120v-720h720v720H120Zm60-500h600v-160H180v160Zm220 220h160v-160H400v160Zm0 220h160v-160H400v160ZM180-400h160v-160H180v160Zm440 0h160v-160H620v160ZM180-180h160v-160H180v160Zm440 0h160v-160H620v160Z"/>
-  </svg>
-    </button>
-
-  <style>
-    .colab-df-container {
-      display:flex;
-      gap: 12px;
-    }
-
-    .colab-df-convert {
-      background-color: #E8F0FE;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      display: none;
-      fill: #1967D2;
-      height: 32px;
-      padding: 0 0 0 0;
-      width: 32px;
-    }
-
-    .colab-df-convert:hover {
-      background-color: #E2EBFA;
-      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);
-      fill: #174EA6;
-    }
-
-    .colab-df-buttons div {
-      margin-bottom: 4px;
-    }
-
-    [theme=dark] .colab-df-convert {
-      background-color: #3B4455;
-      fill: #D2E3FC;
-    }
-
-    [theme=dark] .colab-df-convert:hover {
-      background-color: #434B5C;
-      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
-      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));
-      fill: #FFFFFF;
-    }
-  </style>
-
-    <script>
-      const buttonEl =
-        document.querySelector('#df-6e9c53fe-53da-43bb-9930-e5bfde90bcf7 button.colab-df-convert');
-      buttonEl.style.display =
-        google.colab.kernel.accessAllowed ? 'block' : 'none';
-
-      async function convertToInteractive(key) {
-        const element = document.querySelector('#df-6e9c53fe-53da-43bb-9930-e5bfde90bcf7');
-        const dataTable =
-          await google.colab.kernel.invokeFunction('convertToInteractive',
-                                                    [key], {});
-        if (!dataTable) return;
-
-        const docLinkHtml = 'Like what you see? Visit the ' +
-          '<a target="_blank" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'
-          + ' to learn more about interactive tables.';
-        element.innerHTML = '';
-        dataTable['output_type'] = 'display_data';
-        await google.colab.output.renderOutput(dataTable, element);
-        const docLink = document.createElement('div');
-        docLink.innerHTML = docLinkHtml;
-        element.appendChild(docLink);
-      }
-    </script>
-  </div>
-
-
-    </div>
-  </div>
-
 
 
 
     
-![png](graph_sampling_files/graph_sampling_50_2.png)
+![png](graph_sampling_files/graph_sampling_49_2.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_50_3.png)
+![png](graph_sampling_files/graph_sampling_49_3.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_50_4.png)
+![png](graph_sampling_files/graph_sampling_49_4.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_50_5.png)
+![png](graph_sampling_files/graph_sampling_49_5.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_50_6.png)
+![png](graph_sampling_files/graph_sampling_49_6.png)
     
 
 
@@ -2082,7 +1387,7 @@ num_samples_nodes, _ = num_samples(graph, 0.85)
 rw_graph, node_dist_dict = random_walk_sampling(graph, num_samples_nodes, force=True)
 ```
 
-    979 iterations required to explore  406  different nodes
+    1204 iterations required to explore  406  different nodes
 
 
 
@@ -2091,22 +1396,20 @@ analyze_sampling(rw_graph, "Random Walk Sampling", node_dist_dict)
 ```
 
     Number of nodes: 406
-    Number of edges: 760
+    Number of edges: 804
     Has isolated nodes: False
     Has self-loops: False
     Is undirected: False
-    Average node degree: 1.87
+    Average node degree: 1.98
     Number of classes: 7
     Number of connected components: 1
-    Average clustering coefficient: 0.11052
-    Density: 0.00629
-    Transitivity: 0.02382
+    Average clustering coefficient: 0.15158
+    Density: 0.00646
+    Transitivity: 0.02036
 
 
 
-
-  <div id="df-5cc22f58-c658-4062-aa6d-8b37fa6f5d9c" class="colab-df-container">
-    <div>
+<div>
 <style scoped>
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;
@@ -2138,129 +1441,46 @@ analyze_sampling(rw_graph, "Random Walk Sampling", node_dist_dict)
     <tr>
       <th>0</th>
       <td>406.0</td>
-      <td>2.55</td>
-      <td>5.27</td>
+      <td>2.62</td>
+      <td>6.51</td>
       <td>1.0</td>
       <td>1.0</td>
       <td>2.0</td>
       <td>2.0</td>
-      <td>92.0</td>
+      <td>120.0</td>
     </tr>
   </tbody>
 </table>
 </div>
-    <div class="colab-df-buttons">
-
-  <div class="colab-df-container">
-    <button class="colab-df-convert" onclick="convertToInteractive('df-5cc22f58-c658-4062-aa6d-8b37fa6f5d9c')"
-            title="Convert this dataframe to an interactive table."
-            style="display:none;">
-
-  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960">
-    <path d="M120-120v-720h720v720H120Zm60-500h600v-160H180v160Zm220 220h160v-160H400v160Zm0 220h160v-160H400v160ZM180-400h160v-160H180v160Zm440 0h160v-160H620v160ZM180-180h160v-160H180v160Zm440 0h160v-160H620v160Z"/>
-  </svg>
-    </button>
-
-  <style>
-    .colab-df-container {
-      display:flex;
-      gap: 12px;
-    }
-
-    .colab-df-convert {
-      background-color: #E8F0FE;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      display: none;
-      fill: #1967D2;
-      height: 32px;
-      padding: 0 0 0 0;
-      width: 32px;
-    }
-
-    .colab-df-convert:hover {
-      background-color: #E2EBFA;
-      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);
-      fill: #174EA6;
-    }
-
-    .colab-df-buttons div {
-      margin-bottom: 4px;
-    }
-
-    [theme=dark] .colab-df-convert {
-      background-color: #3B4455;
-      fill: #D2E3FC;
-    }
-
-    [theme=dark] .colab-df-convert:hover {
-      background-color: #434B5C;
-      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
-      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));
-      fill: #FFFFFF;
-    }
-  </style>
-
-    <script>
-      const buttonEl =
-        document.querySelector('#df-5cc22f58-c658-4062-aa6d-8b37fa6f5d9c button.colab-df-convert');
-      buttonEl.style.display =
-        google.colab.kernel.accessAllowed ? 'block' : 'none';
-
-      async function convertToInteractive(key) {
-        const element = document.querySelector('#df-5cc22f58-c658-4062-aa6d-8b37fa6f5d9c');
-        const dataTable =
-          await google.colab.kernel.invokeFunction('convertToInteractive',
-                                                    [key], {});
-        if (!dataTable) return;
-
-        const docLinkHtml = 'Like what you see? Visit the ' +
-          '<a target="_blank" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'
-          + ' to learn more about interactive tables.';
-        element.innerHTML = '';
-        dataTable['output_type'] = 'display_data';
-        await google.colab.output.renderOutput(dataTable, element);
-        const docLink = document.createElement('div');
-        docLink.innerHTML = docLinkHtml;
-        element.appendChild(docLink);
-      }
-    </script>
-  </div>
-
-
-    </div>
-  </div>
-
 
 
 
     
-![png](graph_sampling_files/graph_sampling_54_2.png)
+![png](graph_sampling_files/graph_sampling_53_2.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_54_3.png)
+![png](graph_sampling_files/graph_sampling_53_3.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_54_4.png)
+![png](graph_sampling_files/graph_sampling_53_4.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_54_5.png)
+![png](graph_sampling_files/graph_sampling_53_5.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_54_6.png)
+![png](graph_sampling_files/graph_sampling_53_6.png)
     
 
 
@@ -2359,7 +1579,7 @@ num_samples_nodes, _ = num_samples(graph, 0.85)
 mhrw_graph, node_dist_dict = metropolis_hastings_random_walk_sampling(graph, num_samples_nodes, force=True)
 ```
 
-    2173 iterations required to explore  406  different nodes
+    2455 iterations required to explore  406  different nodes
 
 
 
@@ -2368,22 +1588,20 @@ analyze_sampling(mhrw_graph, "Metropolis-Hastings Random Walk Sampling", node_di
 ```
 
     Number of nodes: 406
-    Number of edges: 728
+    Number of edges: 778
     Has isolated nodes: False
     Has self-loops: False
     Is undirected: False
-    Average node degree: 1.79
+    Average node degree: 1.92
     Number of classes: 7
     Number of connected components: 1
-    Average clustering coefficient: 0.09619
-    Density: 0.00608
-    Transitivity: 0.10384
+    Average clustering coefficient: 0.09845
+    Density: 0.00645
+    Transitivity: 0.12908
 
 
 
-
-  <div id="df-bb7072ec-119f-4a89-84c7-ad685a7c4f3d" class="colab-df-container">
-    <div>
+<div>
 <style scoped>
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;
@@ -2415,129 +1633,46 @@ analyze_sampling(mhrw_graph, "Metropolis-Hastings Random Walk Sampling", node_di
     <tr>
       <th>0</th>
       <td>406.0</td>
-      <td>2.46</td>
-      <td>1.29</td>
+      <td>2.61</td>
+      <td>1.56</td>
       <td>1.0</td>
       <td>2.0</td>
       <td>2.0</td>
       <td>3.0</td>
-      <td>9.0</td>
+      <td>11.0</td>
     </tr>
   </tbody>
 </table>
 </div>
-    <div class="colab-df-buttons">
-
-  <div class="colab-df-container">
-    <button class="colab-df-convert" onclick="convertToInteractive('df-bb7072ec-119f-4a89-84c7-ad685a7c4f3d')"
-            title="Convert this dataframe to an interactive table."
-            style="display:none;">
-
-  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960">
-    <path d="M120-120v-720h720v720H120Zm60-500h600v-160H180v160Zm220 220h160v-160H400v160Zm0 220h160v-160H400v160ZM180-400h160v-160H180v160Zm440 0h160v-160H620v160ZM180-180h160v-160H180v160Zm440 0h160v-160H620v160Z"/>
-  </svg>
-    </button>
-
-  <style>
-    .colab-df-container {
-      display:flex;
-      gap: 12px;
-    }
-
-    .colab-df-convert {
-      background-color: #E8F0FE;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      display: none;
-      fill: #1967D2;
-      height: 32px;
-      padding: 0 0 0 0;
-      width: 32px;
-    }
-
-    .colab-df-convert:hover {
-      background-color: #E2EBFA;
-      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);
-      fill: #174EA6;
-    }
-
-    .colab-df-buttons div {
-      margin-bottom: 4px;
-    }
-
-    [theme=dark] .colab-df-convert {
-      background-color: #3B4455;
-      fill: #D2E3FC;
-    }
-
-    [theme=dark] .colab-df-convert:hover {
-      background-color: #434B5C;
-      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
-      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));
-      fill: #FFFFFF;
-    }
-  </style>
-
-    <script>
-      const buttonEl =
-        document.querySelector('#df-bb7072ec-119f-4a89-84c7-ad685a7c4f3d button.colab-df-convert');
-      buttonEl.style.display =
-        google.colab.kernel.accessAllowed ? 'block' : 'none';
-
-      async function convertToInteractive(key) {
-        const element = document.querySelector('#df-bb7072ec-119f-4a89-84c7-ad685a7c4f3d');
-        const dataTable =
-          await google.colab.kernel.invokeFunction('convertToInteractive',
-                                                    [key], {});
-        if (!dataTable) return;
-
-        const docLinkHtml = 'Like what you see? Visit the ' +
-          '<a target="_blank" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'
-          + ' to learn more about interactive tables.';
-        element.innerHTML = '';
-        dataTable['output_type'] = 'display_data';
-        await google.colab.output.renderOutput(dataTable, element);
-        const docLink = document.createElement('div');
-        docLink.innerHTML = docLinkHtml;
-        element.appendChild(docLink);
-      }
-    </script>
-  </div>
-
-
-    </div>
-  </div>
-
 
 
 
     
-![png](graph_sampling_files/graph_sampling_58_2.png)
+![png](graph_sampling_files/graph_sampling_57_2.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_58_3.png)
+![png](graph_sampling_files/graph_sampling_57_3.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_58_4.png)
+![png](graph_sampling_files/graph_sampling_57_4.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_58_5.png)
+![png](graph_sampling_files/graph_sampling_57_5.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_58_6.png)
+![png](graph_sampling_files/graph_sampling_57_6.png)
     
 
 
@@ -2614,7 +1749,7 @@ def random_walk_sampling_escaping(graph, num_samples, force, escape_prob):
 rwe_sampling, node_dist_dict = random_walk_sampling_escaping(graph, num_samples_nodes, force=True, escape_prob=0.1)
 ```
 
-    932 iterations required to explore  406  different nodes
+    1091 iterations required to explore  406  different nodes
 
 
 
@@ -2623,22 +1758,20 @@ analyze_sampling(rwe_sampling, "Random Walk with Escaping", node_dist_dict)
 ```
 
     Number of nodes: 406
-    Number of edges: 785
+    Number of edges: 796
     Has isolated nodes: False
     Has self-loops: False
     Is undirected: False
-    Average node degree: 1.93
+    Average node degree: 1.96
     Number of classes: 7
     Number of connected components: 1
-    Average clustering coefficient: 0.13468
-    Density: 0.00663
-    Transitivity: 0.03525
+    Average clustering coefficient: 0.15020
+    Density: 0.00659
+    Transitivity: 0.02181
 
 
 
-
-  <div id="df-f0b137d1-15b4-4661-af7c-04db60d0af33" class="colab-df-container">
-    <div>
+<div>
 <style scoped>
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;
@@ -2670,129 +1803,46 @@ analyze_sampling(rwe_sampling, "Random Walk with Escaping", node_dist_dict)
     <tr>
       <th>0</th>
       <td>406.0</td>
-      <td>2.68</td>
-      <td>4.26</td>
+      <td>2.67</td>
+      <td>6.35</td>
       <td>1.0</td>
       <td>1.0</td>
       <td>2.0</td>
       <td>2.0</td>
-      <td>62.0</td>
+      <td>115.0</td>
     </tr>
   </tbody>
 </table>
 </div>
-    <div class="colab-df-buttons">
-
-  <div class="colab-df-container">
-    <button class="colab-df-convert" onclick="convertToInteractive('df-f0b137d1-15b4-4661-af7c-04db60d0af33')"
-            title="Convert this dataframe to an interactive table."
-            style="display:none;">
-
-  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960">
-    <path d="M120-120v-720h720v720H120Zm60-500h600v-160H180v160Zm220 220h160v-160H400v160Zm0 220h160v-160H400v160ZM180-400h160v-160H180v160Zm440 0h160v-160H620v160ZM180-180h160v-160H180v160Zm440 0h160v-160H620v160Z"/>
-  </svg>
-    </button>
-
-  <style>
-    .colab-df-container {
-      display:flex;
-      gap: 12px;
-    }
-
-    .colab-df-convert {
-      background-color: #E8F0FE;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      display: none;
-      fill: #1967D2;
-      height: 32px;
-      padding: 0 0 0 0;
-      width: 32px;
-    }
-
-    .colab-df-convert:hover {
-      background-color: #E2EBFA;
-      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);
-      fill: #174EA6;
-    }
-
-    .colab-df-buttons div {
-      margin-bottom: 4px;
-    }
-
-    [theme=dark] .colab-df-convert {
-      background-color: #3B4455;
-      fill: #D2E3FC;
-    }
-
-    [theme=dark] .colab-df-convert:hover {
-      background-color: #434B5C;
-      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
-      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));
-      fill: #FFFFFF;
-    }
-  </style>
-
-    <script>
-      const buttonEl =
-        document.querySelector('#df-f0b137d1-15b4-4661-af7c-04db60d0af33 button.colab-df-convert');
-      buttonEl.style.display =
-        google.colab.kernel.accessAllowed ? 'block' : 'none';
-
-      async function convertToInteractive(key) {
-        const element = document.querySelector('#df-f0b137d1-15b4-4661-af7c-04db60d0af33');
-        const dataTable =
-          await google.colab.kernel.invokeFunction('convertToInteractive',
-                                                    [key], {});
-        if (!dataTable) return;
-
-        const docLinkHtml = 'Like what you see? Visit the ' +
-          '<a target="_blank" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'
-          + ' to learn more about interactive tables.';
-        element.innerHTML = '';
-        dataTable['output_type'] = 'display_data';
-        await google.colab.output.renderOutput(dataTable, element);
-        const docLink = document.createElement('div');
-        docLink.innerHTML = docLinkHtml;
-        element.appendChild(docLink);
-      }
-    </script>
-  </div>
-
-
-    </div>
-  </div>
-
 
 
 
     
-![png](graph_sampling_files/graph_sampling_62_2.png)
+![png](graph_sampling_files/graph_sampling_61_2.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_62_3.png)
+![png](graph_sampling_files/graph_sampling_61_3.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_62_4.png)
+![png](graph_sampling_files/graph_sampling_61_4.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_62_5.png)
+![png](graph_sampling_files/graph_sampling_61_5.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_62_6.png)
+![png](graph_sampling_files/graph_sampling_61_6.png)
     
 
 
@@ -2849,11 +1899,11 @@ num_samples_nodes, _ = num_samples(graph, 0.85)
 mirw_graph, node_dist_dict = multiple_independent_random_walkers(graph, num_samples_nodes, 5, force=True)
 ```
 
-    126 iterations required to explore  81  different nodes
-    193 iterations required to explore  81  different nodes
-    117 iterations required to explore  81  different nodes
-    148 iterations required to explore  81  different nodes
-    159 iterations required to explore  81  different nodes
+    155 iterations required to explore  81  different nodes
+    142 iterations required to explore  81  different nodes
+    134 iterations required to explore  81  different nodes
+    129 iterations required to explore  81  different nodes
+    166 iterations required to explore  81  different nodes
 
 
 
@@ -2861,23 +1911,21 @@ mirw_graph, node_dist_dict = multiple_independent_random_walkers(graph, num_samp
 analyze_sampling(mirw_graph, "Multiple Independent Random Walkers", node_dist_dict)
 ```
 
-    Number of nodes: 309
-    Number of edges: 798
+    Number of nodes: 337
+    Number of edges: 844
     Has isolated nodes: False
     Has self-loops: False
     Is undirected: True
-    Average node degree: 2.58
+    Average node degree: 2.50
     Number of classes: 7
     Number of connected components: 1
-    Average clustering coefficient: 0.14726
-    Density: 0.00838
-    Transitivity: 0.02399
+    Average clustering coefficient: 0.10019
+    Density: 0.00745
+    Transitivity: 0.02297
 
 
 
-
-  <div id="df-4695acbd-0491-40d1-aed9-2451cc576bee" class="colab-df-container">
-    <div>
+<div>
 <style scoped>
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;
@@ -2908,130 +1956,47 @@ analyze_sampling(mirw_graph, "Multiple Independent Random Walkers", node_dist_di
   <tbody>
     <tr>
       <th>0</th>
-      <td>309.0</td>
-      <td>2.58</td>
-      <td>5.7</td>
+      <td>337.0</td>
+      <td>2.5</td>
+      <td>4.92</td>
       <td>1.0</td>
       <td>1.0</td>
       <td>2.0</td>
       <td>2.0</td>
-      <td>94.0</td>
+      <td>81.0</td>
     </tr>
   </tbody>
 </table>
 </div>
-    <div class="colab-df-buttons">
-
-  <div class="colab-df-container">
-    <button class="colab-df-convert" onclick="convertToInteractive('df-4695acbd-0491-40d1-aed9-2451cc576bee')"
-            title="Convert this dataframe to an interactive table."
-            style="display:none;">
-
-  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960">
-    <path d="M120-120v-720h720v720H120Zm60-500h600v-160H180v160Zm220 220h160v-160H400v160Zm0 220h160v-160H400v160ZM180-400h160v-160H180v160Zm440 0h160v-160H620v160ZM180-180h160v-160H180v160Zm440 0h160v-160H620v160Z"/>
-  </svg>
-    </button>
-
-  <style>
-    .colab-df-container {
-      display:flex;
-      gap: 12px;
-    }
-
-    .colab-df-convert {
-      background-color: #E8F0FE;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      display: none;
-      fill: #1967D2;
-      height: 32px;
-      padding: 0 0 0 0;
-      width: 32px;
-    }
-
-    .colab-df-convert:hover {
-      background-color: #E2EBFA;
-      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);
-      fill: #174EA6;
-    }
-
-    .colab-df-buttons div {
-      margin-bottom: 4px;
-    }
-
-    [theme=dark] .colab-df-convert {
-      background-color: #3B4455;
-      fill: #D2E3FC;
-    }
-
-    [theme=dark] .colab-df-convert:hover {
-      background-color: #434B5C;
-      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
-      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));
-      fill: #FFFFFF;
-    }
-  </style>
-
-    <script>
-      const buttonEl =
-        document.querySelector('#df-4695acbd-0491-40d1-aed9-2451cc576bee button.colab-df-convert');
-      buttonEl.style.display =
-        google.colab.kernel.accessAllowed ? 'block' : 'none';
-
-      async function convertToInteractive(key) {
-        const element = document.querySelector('#df-4695acbd-0491-40d1-aed9-2451cc576bee');
-        const dataTable =
-          await google.colab.kernel.invokeFunction('convertToInteractive',
-                                                    [key], {});
-        if (!dataTable) return;
-
-        const docLinkHtml = 'Like what you see? Visit the ' +
-          '<a target="_blank" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'
-          + ' to learn more about interactive tables.';
-        element.innerHTML = '';
-        dataTable['output_type'] = 'display_data';
-        await google.colab.output.renderOutput(dataTable, element);
-        const docLink = document.createElement('div');
-        docLink.innerHTML = docLinkHtml;
-        element.appendChild(docLink);
-      }
-    </script>
-  </div>
-
-
-    </div>
-  </div>
-
 
 
 
     
-![png](graph_sampling_files/graph_sampling_66_2.png)
+![png](graph_sampling_files/graph_sampling_65_2.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_66_3.png)
+![png](graph_sampling_files/graph_sampling_65_3.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_66_4.png)
+![png](graph_sampling_files/graph_sampling_65_4.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_66_5.png)
+![png](graph_sampling_files/graph_sampling_65_5.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_66_6.png)
+![png](graph_sampling_files/graph_sampling_65_6.png)
     
 
 
@@ -3127,7 +2092,7 @@ num_samples_nodes, _ = num_samples(graph, 0.85)
 fs_graph, node_dist_dict = frontier_sampling(graph, num_samples_nodes, force=True)
 ```
 
-    1220 iterations required to explore  406  different nodes
+    1142 iterations required to explore  406  different nodes
 
 
 
@@ -3136,22 +2101,20 @@ analyze_sampling(fs_graph, "Frontier Sampling", node_dist_dict)
 ```
 
     Number of nodes: 406
-    Number of edges: 788
+    Number of edges: 785
     Has isolated nodes: False
     Has self-loops: False
     Is undirected: False
-    Average node degree: 1.94
+    Average node degree: 1.93
     Number of classes: 7
-    Number of connected components: 2
-    Average clustering coefficient: 0.13267
-    Density: 0.00639
-    Transitivity: 0.02692
+    Number of connected components: 4
+    Average clustering coefficient: 0.16802
+    Density: 0.00663
+    Transitivity: 0.05503
 
 
 
-
-  <div id="df-819e05b1-f836-4418-8e3d-fbae592301c9" class="colab-df-container">
-    <div>
+<div>
 <style scoped>
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;
@@ -3183,129 +2146,46 @@ analyze_sampling(fs_graph, "Frontier Sampling", node_dist_dict)
     <tr>
       <th>0</th>
       <td>406.0</td>
-      <td>2.59</td>
-      <td>5.33</td>
+      <td>2.68</td>
+      <td>4.31</td>
       <td>1.0</td>
       <td>1.0</td>
       <td>2.0</td>
-      <td>2.0</td>
-      <td>87.0</td>
+      <td>3.0</td>
+      <td>57.0</td>
     </tr>
   </tbody>
 </table>
 </div>
-    <div class="colab-df-buttons">
-
-  <div class="colab-df-container">
-    <button class="colab-df-convert" onclick="convertToInteractive('df-819e05b1-f836-4418-8e3d-fbae592301c9')"
-            title="Convert this dataframe to an interactive table."
-            style="display:none;">
-
-  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960">
-    <path d="M120-120v-720h720v720H120Zm60-500h600v-160H180v160Zm220 220h160v-160H400v160Zm0 220h160v-160H400v160ZM180-400h160v-160H180v160Zm440 0h160v-160H620v160ZM180-180h160v-160H180v160Zm440 0h160v-160H620v160Z"/>
-  </svg>
-    </button>
-
-  <style>
-    .colab-df-container {
-      display:flex;
-      gap: 12px;
-    }
-
-    .colab-df-convert {
-      background-color: #E8F0FE;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      display: none;
-      fill: #1967D2;
-      height: 32px;
-      padding: 0 0 0 0;
-      width: 32px;
-    }
-
-    .colab-df-convert:hover {
-      background-color: #E2EBFA;
-      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);
-      fill: #174EA6;
-    }
-
-    .colab-df-buttons div {
-      margin-bottom: 4px;
-    }
-
-    [theme=dark] .colab-df-convert {
-      background-color: #3B4455;
-      fill: #D2E3FC;
-    }
-
-    [theme=dark] .colab-df-convert:hover {
-      background-color: #434B5C;
-      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
-      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));
-      fill: #FFFFFF;
-    }
-  </style>
-
-    <script>
-      const buttonEl =
-        document.querySelector('#df-819e05b1-f836-4418-8e3d-fbae592301c9 button.colab-df-convert');
-      buttonEl.style.display =
-        google.colab.kernel.accessAllowed ? 'block' : 'none';
-
-      async function convertToInteractive(key) {
-        const element = document.querySelector('#df-819e05b1-f836-4418-8e3d-fbae592301c9');
-        const dataTable =
-          await google.colab.kernel.invokeFunction('convertToInteractive',
-                                                    [key], {});
-        if (!dataTable) return;
-
-        const docLinkHtml = 'Like what you see? Visit the ' +
-          '<a target="_blank" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'
-          + ' to learn more about interactive tables.';
-        element.innerHTML = '';
-        dataTable['output_type'] = 'display_data';
-        await google.colab.output.renderOutput(dataTable, element);
-        const docLink = document.createElement('div');
-        docLink.innerHTML = docLinkHtml;
-        element.appendChild(docLink);
-      }
-    </script>
-  </div>
-
-
-    </div>
-  </div>
-
 
 
 
     
-![png](graph_sampling_files/graph_sampling_70_2.png)
+![png](graph_sampling_files/graph_sampling_69_2.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_70_3.png)
+![png](graph_sampling_files/graph_sampling_69_3.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_70_4.png)
+![png](graph_sampling_files/graph_sampling_69_4.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_70_5.png)
+![png](graph_sampling_files/graph_sampling_69_5.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_70_6.png)
+![png](graph_sampling_files/graph_sampling_69_6.png)
     
 
 
@@ -3409,23 +2289,21 @@ ffs_graph, node_dist_dict = forest_fire_sampling(graph, num_samples_nodes, 8 , p
 analyze_sampling(ffs_graph, "Forest Fire Sampling", node_dist_dict)
 ```
 
-    Number of nodes: 364
-    Number of edges: 1050
+    Number of nodes: 311
+    Number of edges: 808
     Has isolated nodes: False
     Has self-loops: False
     Is undirected: True
-    Average node degree: 2.88
+    Average node degree: 2.60
     Number of classes: 7
-    Number of connected components: 3
-    Average clustering coefficient: 0.10505
-    Density: 0.00795
-    Transitivity: 0.11314
+    Number of connected components: 1
+    Average clustering coefficient: 0.14086
+    Density: 0.00838
+    Transitivity: 0.13282
 
 
 
-
-  <div id="df-25508067-a0bd-4123-a476-70dd20eb92a4" class="colab-df-container">
-    <div>
+<div>
 <style scoped>
     .dataframe tbody tr th:only-of-type {
         vertical-align: middle;
@@ -3456,129 +2334,46 @@ analyze_sampling(ffs_graph, "Forest Fire Sampling", node_dist_dict)
   <tbody>
     <tr>
       <th>0</th>
-      <td>364.0</td>
-      <td>2.88</td>
-      <td>1.9</td>
+      <td>311.0</td>
+      <td>2.6</td>
+      <td>1.59</td>
       <td>1.0</td>
       <td>2.0</td>
       <td>2.0</td>
-      <td>4.0</td>
-      <td>15.0</td>
+      <td>3.0</td>
+      <td>19.0</td>
     </tr>
   </tbody>
 </table>
 </div>
-    <div class="colab-df-buttons">
-
-  <div class="colab-df-container">
-    <button class="colab-df-convert" onclick="convertToInteractive('df-25508067-a0bd-4123-a476-70dd20eb92a4')"
-            title="Convert this dataframe to an interactive table."
-            style="display:none;">
-
-  <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960">
-    <path d="M120-120v-720h720v720H120Zm60-500h600v-160H180v160Zm220 220h160v-160H400v160Zm0 220h160v-160H400v160ZM180-400h160v-160H180v160Zm440 0h160v-160H620v160ZM180-180h160v-160H180v160Zm440 0h160v-160H620v160Z"/>
-  </svg>
-    </button>
-
-  <style>
-    .colab-df-container {
-      display:flex;
-      gap: 12px;
-    }
-
-    .colab-df-convert {
-      background-color: #E8F0FE;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      display: none;
-      fill: #1967D2;
-      height: 32px;
-      padding: 0 0 0 0;
-      width: 32px;
-    }
-
-    .colab-df-convert:hover {
-      background-color: #E2EBFA;
-      box-shadow: 0px 1px 2px rgba(60, 64, 67, 0.3), 0px 1px 3px 1px rgba(60, 64, 67, 0.15);
-      fill: #174EA6;
-    }
-
-    .colab-df-buttons div {
-      margin-bottom: 4px;
-    }
-
-    [theme=dark] .colab-df-convert {
-      background-color: #3B4455;
-      fill: #D2E3FC;
-    }
-
-    [theme=dark] .colab-df-convert:hover {
-      background-color: #434B5C;
-      box-shadow: 0px 1px 3px 1px rgba(0, 0, 0, 0.15);
-      filter: drop-shadow(0px 1px 2px rgba(0, 0, 0, 0.3));
-      fill: #FFFFFF;
-    }
-  </style>
-
-    <script>
-      const buttonEl =
-        document.querySelector('#df-25508067-a0bd-4123-a476-70dd20eb92a4 button.colab-df-convert');
-      buttonEl.style.display =
-        google.colab.kernel.accessAllowed ? 'block' : 'none';
-
-      async function convertToInteractive(key) {
-        const element = document.querySelector('#df-25508067-a0bd-4123-a476-70dd20eb92a4');
-        const dataTable =
-          await google.colab.kernel.invokeFunction('convertToInteractive',
-                                                    [key], {});
-        if (!dataTable) return;
-
-        const docLinkHtml = 'Like what you see? Visit the ' +
-          '<a target="_blank" href=https://colab.research.google.com/notebooks/data_table.ipynb>data table notebook</a>'
-          + ' to learn more about interactive tables.';
-        element.innerHTML = '';
-        dataTable['output_type'] = 'display_data';
-        await google.colab.output.renderOutput(dataTable, element);
-        const docLink = document.createElement('div');
-        docLink.innerHTML = docLinkHtml;
-        element.appendChild(docLink);
-      }
-    </script>
-  </div>
-
-
-    </div>
-  </div>
-
 
 
 
     
-![png](graph_sampling_files/graph_sampling_74_2.png)
+![png](graph_sampling_files/graph_sampling_73_2.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_74_3.png)
+![png](graph_sampling_files/graph_sampling_73_3.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_74_4.png)
+![png](graph_sampling_files/graph_sampling_73_4.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_74_5.png)
+![png](graph_sampling_files/graph_sampling_73_5.png)
     
 
 
 
     
-![png](graph_sampling_files/graph_sampling_74_6.png)
+![png](graph_sampling_files/graph_sampling_73_6.png)
     
 
