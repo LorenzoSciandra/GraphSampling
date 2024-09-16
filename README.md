@@ -359,9 +359,9 @@ def analyze_sampling(graph, title, node_dist=None):
 ## Vertex Sampling (VS)
 
 First $V_S\subset V$ nodes are sampled uniformly or in accordance with some distribution if knowledge about the domain is available and then $G_S=(V_S, E_S)$ is defined where $E_S \subset E$ is the set of all the edges we can take from $E$ such that they connect two nodes sampled in $V_S$. In our case we will use the distribution on the nodes:
-$$
-\pi_{v_i} = \frac{d_G(v_i)}{\sum_{v_k \in V} d_G(v_k)}
-$$
+``` math
+$$\pi_{v_i} = \frac{d_G(v_i)}{\sum_{v_k \in V} d_G(v_k)}$$
+```
 
 
 ```python
@@ -467,9 +467,9 @@ analyze_sampling(vs_graph, "Vertex Sampling")
 In the opposite way to before, we first sample a certain number of edges $E_S$ and then we define the sampling graph $G_S=(V_S, E_S)$ in which $V_S$ is the set of all the nodes that appear in at least one of the sampled edges.
 
 The distribution used on the edges is:
-$$
-\pi_{e_{ij}} = \frac{d_G(v_i) + d_G(v_j)}{\sum_{e_{kz} \in E} d_G(v_k) + d_G(v_z)}
-$$
+``` math
+$$\pi_{e_{ij}} = \frac{d_G(v_i) + d_G(v_j)}{\sum_{e_{kz} \in E} d_G(v_k) + d_G(v_z)}$$
+```
 in which, compared to uniform distribution, more importance is given to edges that connect highly connected nodes in the network.
 
 
@@ -1028,7 +1028,10 @@ The sampling algorithm is as follows:
  - get $k$ new neighbors from each node in $V^{(i-1)}$ and define with $E^{(i)}$ the set of edges used;
  - create the set $\tilde{V}^{(i)}$ composed of all nodes in $V^{(i-1)}$ and all $k$ neighbors sampled for each node;
  - update $V^{(i)} = \tilde{V}^{(i)} - \bigcup_{j=0}^{i-1} V^{(j)}$
-- Once the maximum number of iterations $T$ is reached, return $G_S=(V_S, E_S)$ with $V_S= \bigcup_{t=0}^T V^{(t)}$ and $E_S= \bigcup_{t=0 }^T E^{(t)}$.
+- Once the maximum number of iterations $T$ is reached, return $G_S=(V_S, E_S)$ with:
+``` math
+V_S = \bigcup_{t=0}^{T} V^{(t)} \qquad \text{and} \qquad E_S = \bigcup_{t=0 }^{T} E^{(t)}.
+```
 
 
 ```python
@@ -1370,20 +1373,27 @@ analyze_sampling(rw_graph, "Random Walk Sampling", node_dist_dict)
 ### Metropolis-Hastings Random Walk
 
 It is an algorithm usually used to obtain a certain desired distribution on the nodes. Denoted by $P_{uv}$ the matrix with the transition probabilities $u \to v$ and by $\pi_u$ the value of the distribution $\boldsymbol{\pi}$ on $u$, we have:
-$$
-P_{uv} =
+``` math
+$$ P_{uv} =
 \begin{cases}
 M_{uv} \cdot \min\left\{1, \frac{\pi_v}{\pi_u} \right\} \qquad & u \neq v \:\land \: v \in \mathcal{N}( u)\\
 0 & u \neq v \: \land \: v \notin \mathcal{N}(u)\\
 1 - \sum_{w \in V} P_{uw} & u = v
-\end{cases}
+\end{cases}$$
+```
+Where $M_{uv}=M_{vu}$ is a normalization constant for the node pair $(u,v)$. A small value of $M_{uv}$ underweights all the probabilities of undertaking an outgoing edge from $u$ and consequently gives high importance to self-loops and dilates the mixing time for the desired node distribution. A classic choice is
+``` math
 $$
-Where $M_{uv}=M_{vu}$ is a normalization constant for the node pair $(u,v)$. A small value of $M_{uv}$ underweights all the probabilities of undertaking an outgoing edge from $u$ and consequently gives high importance to self-loops and dilates the mixing time for the desired node distribution. A classic choice is $M_{uv} = \min \left\{\frac{1}{d_G(u)}, \frac{1}{d_G(v)}\right\}$.
+M_{uv} = \min \left\{\frac{1}{d_G(u)}, \frac{1}{d_G(v)}\right\}
+$$
+```
 
 In accordance with what was said before, we will use $\boldsymbol{\pi}$ as distribution:
+``` math
 $$
 \forall v \in V \quad \pi_v = \frac{d_G(v)}{\sum_{u \in V} d_G(u)} \:\:\implies\:\: \min\left\{1 , \frac{\pi_v}{\pi_u} \right\} = \min\left\{1, \frac{d_G(v)}{d_G(u)} \right\}
 $$
+```
 in order to promote travel to very crowded areas of the network.
 
 Leaving this aside, the procedure is identical to the random walk: it starts from a node $v_0\in V$ and, at each step it samples, starting from the current $v_i$ it samples the next $v_{i+1}$ to which it moves and update $V_S = V_S \cup \{v_{i+1}\}$, $E_S = E_S \cup \{\{v_{i}, v_{i+1}\}\}$.
