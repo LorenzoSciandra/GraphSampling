@@ -1,7 +1,5 @@
 # Graph Sampling
 
-This notebook presents an implementation of all the methods described in the paper [A Survey and Taxonomy of Graph Sampling](https://arxiv.org/abs/1308.5865).
-
 
 ## Basic useful definitions
 
@@ -37,6 +35,7 @@ from torch_geometric.utils import to_networkx, to_dense_adj, subgraph, coalesce,
 from torch_geometric.data import Data
 from torch_geometric.datasets import Planetoid
 import networkx as nx
+from scipy.spatial.distance import jensenshannon
 from networkx.algorithms import community
 ```
 
@@ -68,6 +67,7 @@ Let's visualize some properties of the dataset that we would like to maintain on
 def graph_info(graph):
   net = to_networkx(graph, to_undirected=True)
   print(f'Number of nodes: {graph.num_nodes}')
+  print(f'Number of node features: {graph.num_node_features}')
   print(f'Number of edges: {graph.num_edges}')
   print(f'Has isolated nodes: {graph.has_isolated_nodes()}')
   print(f'Has self-loops: {graph.has_self_loops()}')
@@ -75,8 +75,8 @@ def graph_info(graph):
   print(f'Average node degree: {graph.num_edges / graph.num_nodes:.2f}')
   print(f'Number of classes: {dataset.num_classes}')
   print(f'Number of connected components: {nx.number_connected_components(net)}')
-  print(f'Average clustering coefficient: {nx.average_clustering(net):.5f}')
   print(f'Density: {nx.density(net):.5f}')
+  print(f'Average clustering coefficient: {nx.average_clustering(net):.5f}')
   print(f'Transitivity: {nx.transitivity(net):.5f}')
 ```
 
@@ -87,6 +87,7 @@ graph_info(graph)
 ```
 
     Number of nodes: 2708
+    Number of node features: 1433
     Number of edges: 10556
     Has isolated nodes: False
     Has self-loops: False
@@ -94,30 +95,111 @@ graph_info(graph)
     Average node degree: 3.90
     Number of classes: 7
     Number of connected components: 78
-    Average clustering coefficient: 0.24067
     Density: 0.00144
+    Average clustering coefficient: 0.24067
     Transitivity: 0.09350
 
 
 
 ```python
-def deg_distribution(graph):
+def deg_distribution(graph, degs_dist):
   net = to_networkx(graph, to_undirected=True)
   degrees = [val for (node, val) in net.degree()]
   display(pd.DataFrame(pd.Series(degrees).describe()).transpose().round(2))
-  plt.figure(figsize=(10, 6))
-  plt.hist(degrees, bins=100)
-  plt.xlabel("node degree")
-  plt.show()
+  
+  avg_degree = graph.num_edges / graph.num_nodes
+  
+  if len(degs_dist) == 0:
+    plt.figure(figsize=(10, 6))
+    sns.histplot(degrees, bins=100, kde=True, color='b', alpha=0.3)
+  else:
+    fig, axs = plt.subplots(1, 2, figsize=(20, 6))
+    sns.histplot(degrees, bins=100, kde=True, color='b', alpha=0.3, ax=axs[0])
+  
+  degrees = collections.Counter(degrees)
+  degrees = pd.DataFrame(degrees.items(), columns=['degree', 'count'])
+
+  for i in range(degrees['degree'].min(), degrees['degree'].max()):
+    if i not in degrees['degree'].values:
+      degrees = pd.concat([degrees, pd.DataFrame([{'degree': i, 'count': 0}])], ignore_index=True)
+        
+  degrees = degrees.sort_values(by='degree')
+  
+  if len(degs_dist) == 0:
+  
+    plt.xlabel("node degree")
+    plt.ylabel("frequency")
+    plt.title("Node degree distribution")
+  
+    plt.axvline(avg_degree, color='r', linestyle='dashed', linewidth=1)
+    plt.text(avg_degree + 1, 100, f'Average degree: {avg_degree:.2f}', color='r')
+  
+    plt.show()
+  
+  else:
+    axs[0].set_xlabel("node degree")
+    axs[0].set_ylabel("frequency")
+    axs[0].set_title("Node degree distribution")
+    
+    axs[0].axvline(avg_degree, color='r', linestyle='dashed', linewidth=1)
+    axs[0].text(avg_degree + 1, 100, f'Average degree: {avg_degree:.2f}', color='r')
+    
+  
+  if len(degs_dist) == 0:
+    curr_dist_degree = degrees['count'] / degrees['count'].sum()
+    curr_dist_degree = curr_dist_degree.values
+    curr_dist_degree = np.insert(curr_dist_degree, 0, 0)
+    return curr_dist_degree
+  
+  else:
+    
+    if 0 not in degrees['degree'].values:
+      degrees = pd.concat([degrees, pd.DataFrame([{'degree': 0, 'count': 0}])], ignore_index=True)
+    
+    for i in range(degs_dist.shape[0] - degrees.shape[0]):
+      deg = degrees['degree'].max() + 1
+      degrees = pd.concat([degrees, pd.DataFrame([{'degree': deg, 'count': 0}])], ignore_index=True)
+    
+    
+    curr_dist_degree = degrees['count'] / degrees['count'].sum()
+    curr_dist_degree = curr_dist_degree.values
+    
+    divergence = jensenshannon(degs_dist, curr_dist_degree)
+  
+    axs[1].plot(degs_dist, label='Initial distribution', color='b')
+    axs[1].plot(curr_dist_degree, label='Current distribution', color='r')
+    axs[1].set_xlabel("node degree")
+    axs[1].set_title("Jensen-Shannon divergence")
+    # add the divergence value to the plot
+    axs[1].text(20, 0.20, f'Divergence: {divergence:.4f}', color='r')
+    
+    plt.legend()
+    plt.show()
+    
+    return degs_dist
 ```
 
 
 ```python
-deg_distribution(graph)
+degs_dist = []
+degs_dist = deg_distribution(graph, degs_dist)
 ```
 
 
 <div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -157,17 +239,57 @@ deg_distribution(graph)
 
 
 ```python
-def class_distribution(graph, labels):
+def class_distribution(graph, labels, class_dist):
   counter = collections.Counter(graph.y.numpy())
   counter = dict(counter)
   unique_labels = graph.y.unique()
   labels_name = {i.item(): labels[i.item()] for i in unique_labels}
-  count = [x[1]/len(graph.x) for x in sorted(counter.items())]
-  plt.figure(figsize=(6, 4))
-  plt.bar(unique_labels, count)
-  plt.xticks(unique_labels, labels_name.values(), rotation=90)
-  plt.title("Class distribution")
-  plt.show()
+  probs = [x[1]/len(graph.x) for x in sorted(counter.items())]
+  
+  if len(class_dist) == 0:
+    plt.figure(figsize=(6, 4))
+    plt.bar(range(len(probs)), probs, color='b', alpha=0.3)
+    for i, p in enumerate(probs):
+      plt.text(i, p, f'{p:.2f}', ha='center', va='bottom')
+  
+    plt.xticks(unique_labels, labels_name.values(), rotation=90)
+    plt.title("Class distribution")
+    plt.show()
+  
+  else:
+    fig, axs = plt.subplots(1, 2, figsize=(20, 6))
+    axs[0].bar(range(len(probs)), probs, color='b', alpha=0.3)
+    for i, p in enumerate(probs):
+      axs[0].text(i, p, f'{p:.2f}', ha='center', va='bottom')
+  
+    axs[0].set_xticks(unique_labels)
+    axs[0].set_xticklabels(labels_name.values(), rotation=90)
+    axs[0].set_title("Class distribution")
+  
+  if len(class_dist) == 0:
+    return probs
+
+  else:
+    
+    divergence = jensenshannon(class_dist, probs)
+    
+    # plot only the points of the 2 distributions
+    axs[1].plot(class_dist, label='Initial distribution', color='b', marker='o', linestyle='None')
+    axs[1].plot(probs, label='Current distribution', color='r', marker='o', linestyle='None')
+    axs[1].set_title("Jensen-Shannon divergence: {:.4f}".format(divergence))
+    
+    # add the point values to the plot
+    for i, p in enumerate(class_dist):
+      axs[1].text(i + 0.2, p, f'{p:.2f}', ha='center', va='bottom', color='b')
+      axs[1].plot([i, i], [class_dist[i], probs[i]], color='gray', linestyle='dashed')
+    for i, p in enumerate(probs):
+      axs[1].text(i + 0.2, p, f'{p:.2f}', ha='center', va='bottom', color='r')      
+    
+    plt.legend()
+    plt.show()
+    
+    return class_dist
+  
 
 ```
 
@@ -185,7 +307,8 @@ label_dict = {
 
 
 ```python
-class_distribution(graph, label_dict)
+class_dist = []
+class_dist = class_distribution(graph, label_dict, class_dist)
 ```
 
 
@@ -198,52 +321,52 @@ The term **homophily** refers to the fact that similar nodes in a graph are ofte
 
 
 ```python
-def add_missing_keys(counter, classes):
-    for x in classes:
-        if x not in counter.keys():
-            counter[x] = 0
-    return counter
+def add_missing_keys(counter, num_classes):
+  for x in range(num_classes): 
+    if x not in counter.keys():
+      counter[x] = 0
+  return counter
 
-def homophily_plot(graph):
+def homophily_plot(graph, labels):
   source_labels = graph.y[graph.edge_index[0]].numpy()
   target_labels = graph.y[graph.edge_index[1]].numpy()
 
   connected_labels_set = np.stack((source_labels, target_labels), axis=0)
+  
+  num_labels = len(label_dict)
+  label_probs = np.zeros((num_labels, num_labels))
+  
+  for i in range(num_labels):
+    i_labels = connected_labels_set[:, connected_labels_set[0] == i]
+    counter = collections.Counter(i_labels[1])
+    if len(counter.keys()) < num_labels:
+      counter = add_missing_keys(counter, num_labels)
+    
+    counter = dict(sorted(counter.items()))
+    items = np.array(list(counter.values()))
+    items = items / items.sum()
+    label_probs[i] = items
 
-  label_connection_counts = []
-  for i in range(len(graph.y.unique())):
-    connected_labels = connected_labels_set[:, np.where(connected_labels_set[0] == i)[0]]
-    counter = collections.Counter(connected_labels[1])
-    counter = dict(counter)
-    counter = add_missing_keys(counter, range(7))
-    items = sorted(counter.items())
-    items = [x[1] for x in items]
-    label_connection_counts.append(items)
-
-  label_connection_counts = np.array(label_connection_counts)
-  row_sums = np.sum(label_connection_counts, axis=1)
-  non_zero_mask = row_sums != 0
-  label_connection_counts_scaled = np.zeros_like(label_connection_counts, dtype=float)
-  label_connection_counts_scaled[non_zero_mask] = label_connection_counts[non_zero_mask] / row_sums[non_zero_mask, np.newaxis]
   plt.figure(figsize=(6, 6))
   plt.rcParams["font.size"] = 10
   hm = sns.heatmap(
-    label_connection_counts_scaled,
+    label_probs,
     annot=True,
     cmap='hot_r',
     fmt="1.2f",
     cbar=True,
     square=True)
-  plt.xlabel("class",size=12)
-  plt.ylabel("class",size=12)
-  plt.tight_layout()
+  labels_name = {i.item(): labels[i.item()] for i in graph.y.unique()}
+  plt.xticks(np.arange(len(labels_name.keys()))+0.5, labels_name.values(), rotation=90, size=10)
+  plt.yticks(np.arange(len(labels_name.keys()))+0.5, labels_name.values(), rotation=0, size=10)
+  plt.title("Homophily plot")
   plt.show()
 
 ```
 
 
 ```python
-homophily_plot(graph)
+homophily_plot(graph, label_dict)
 ```
 
 
@@ -323,14 +446,16 @@ def node_dist_plot(node_dist_dict):
   graph.edge_index = sort_edge_index(graph.edge_index)
   degs = degree(graph.edge_index[0], graph.num_nodes)
 
-  plt_val = []
+  plt_val = {}
 
-  for key, value in node_dist_dict.items():
+  for key, count in node_dist_dict.items():
     deg = degs[key].item()
-    plt_val.append([deg, value])
-
-  plt_val = np.array(plt_val)
-
+    if deg in plt_val:
+      plt_val[deg] += count
+    else:
+      plt_val[deg] = count
+    
+  plt_val = np.array(list(plt_val.items()))
   fig, ax = plt.subplots(figsize=(10, 6))
   ax.set_xlabel('Node Degree')
   ax.set_ylabel('Node count')
@@ -338,7 +463,6 @@ def node_dist_plot(node_dist_dict):
   ax.tick_params(axis='y')
 
   fig.tight_layout()
-  plt.title("Node Degree and Value Distribution")
   plt.show()
 ```
 
@@ -346,29 +470,37 @@ def node_dist_plot(node_dist_dict):
 ```python
 def analyze_sampling(graph, title, node_dist=None):
   graph_info(graph)
-  deg_distribution(graph)
-  class_distribution(graph, label_dict)
+  deg_distribution(graph, degs_dist)
+  class_distribution(graph, label_dict, class_dist)
 
   if node_dist is not None:
     node_dist_plot(node_dist)
 
-  homophily_plot(graph)
+  homophily_plot(graph, label_dict)
   visualize_graph(graph, title)
 ```
 
 ## Vertex Sampling (VS)
 
-First $V_S\subset V$ nodes are sampled uniformly or in accordance with some distribution if knowledge about the domain is available and then $G_S=(V_S, E_S)$ is defined with $E_S \subset E$ is the set of all the edges we can take from $E$ such that they connect two nodes sampled in $V_S$. In our case we will use the distribution on the nodes:
+First $V_S\subset V$ nodes are sampled uniformly or in accordance with some distribution if knowledge about the domain is available and then $G_S=(V_S, E_S)$ is defined with $E_S \subset E$ is the set of all the edges we can take from $E$ such that they connect two nodes sampled in $V_S$.
+
+In our case we will use the distribution on the nodes:
 $$
 \pi_{v_i} = \frac{d_G(v_i)}{\sum_{v_k \in V} d_G(v_k)}
 $$
+or the classic uniform distribution $\pi_{v_i} = \frac{1}{|V|}$.
 
 
 ```python
-def vertex_sampling(graph, num_samples):
-  degs = degree(graph.edge_index[0], graph.num_nodes)
-  probs = degs / torch.sum(degs)
-  node_samp_ids = np.random.choice(graph.num_nodes, num_samples, replace=False, p=probs)
+def vertex_sampling(graph, num_samples, uniform=False):
+  
+  if not uniform:
+    degs = degree(graph.edge_index[0], graph.num_nodes)
+    probs = degs / torch.sum(degs)
+    node_samp_ids = np.random.choice(graph.num_nodes, num_samples, replace=False, p=probs)
+  else:
+    node_samp_ids = np.random.choice(graph.num_nodes, num_samples, replace=False)
+  
   sample_nodes = graph.x[node_samp_ids]
   sample_edges_index, _ = subgraph(torch.tensor(node_samp_ids),
                                                    graph.edge_index,
@@ -384,7 +516,7 @@ def vertex_sampling(graph, num_samples):
 
 ```python
 num_samples_nodes, _ = num_samples(graph, 0.7)
-vs_graph = vertex_sampling(graph, num_samples_nodes)
+vs_graph = vertex_sampling(graph, num_samples_nodes, uniform=False)
 ```
 
 
@@ -393,21 +525,34 @@ analyze_sampling(vs_graph, "Vertex Sampling")
 ```
 
     Number of nodes: 812
-    Number of edges: 2080
+    Number of node features: 1433
+    Number of edges: 2152
     Has isolated nodes: True
     Has self-loops: False
     Is undirected: True
-    Average node degree: 2.56
+    Average node degree: 2.65
     Number of classes: 7
-    Number of connected components: 147
-    Average clustering coefficient: 0.19835
-    Density: 0.00316
-    Transitivity: 0.10741
+    Number of connected components: 135
+    Density: 0.00327
+    Average clustering coefficient: 0.21483
+    Transitivity: 0.11829
 
 
 
 <div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
 
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -426,13 +571,13 @@ analyze_sampling(vs_graph, "Vertex Sampling")
     <tr>
       <th>0</th>
       <td>812.0</td>
-      <td>2.56</td>
-      <td>3.4</td>
+      <td>2.65</td>
+      <td>3.57</td>
       <td>0.0</td>
       <td>1.0</td>
       <td>2.0</td>
       <td>3.0</td>
-      <td>63.0</td>
+      <td>72.0</td>
     </tr>
   </tbody>
 </table>
@@ -469,11 +614,17 @@ We first sample $\tilde{V}_S \subset V$ nodes and then set $V_S = \tilde{V}_S \c
 
 
 ```python
-def vertex_sampling_neighbourhood(graph, num_samples):
-
+def vertex_sampling_neighbourhood(graph, num_samples, uniform=False):
   degs = degree(graph.edge_index[0], graph.num_nodes)
-  probs = degs / torch.sum(degs)
-  node_samp_ids = np.random.choice(graph.num_nodes, num_samples, replace=False, p=probs)
+  avg_degree = torch.sum(degs) / graph.num_nodes
+  num_samples = int(num_samples / avg_degree)
+  if not uniform:  
+    probs = degs / torch.sum(degs)
+    node_samp_ids = np.random.choice(graph.num_nodes, num_samples, replace=False, p=probs)
+  
+  else:
+    node_samp_ids = np.random.choice(graph.num_nodes, num_samples, replace=False)
+    
   node_samp_ids, sample_edges, _, _  = k_hop_subgraph(torch.tensor(node_samp_ids),
                                                      1,
                                                      graph.edge_index,
@@ -487,8 +638,8 @@ def vertex_sampling_neighbourhood(graph, num_samples):
 
 
 ```python
-num_samples_nodes, _ = num_samples(graph, 0.95)
-vsn_graph = vertex_sampling_neighbourhood(graph, num_samples_nodes)
+num_samples_nodes, _ = num_samples(graph, 0.7)
+vsn_graph = vertex_sampling_neighbourhood(graph, num_samples_nodes, True)
 ```
 
 
@@ -496,21 +647,35 @@ vsn_graph = vertex_sampling_neighbourhood(graph, num_samples_nodes)
 analyze_sampling(vsn_graph, "Vertex Sampling with Neighbourhood")
 ```
 
-    Number of nodes: 993
-    Number of edges: 4042
+    Number of nodes: 736
+    Number of node features: 1433
+    Number of edges: 2392
     Has isolated nodes: False
     Has self-loops: False
     Is undirected: True
-    Average node degree: 4.07
+    Average node degree: 3.25
     Number of classes: 7
-    Number of connected components: 15
-    Average clustering coefficient: 0.38694
-    Density: 0.00410
-    Transitivity: 0.08226
+    Number of connected components: 34
+    Density: 0.00442
+    Average clustering coefficient: 0.36169
+    Transitivity: 0.20313
 
 
 
 <div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -528,14 +693,14 @@ analyze_sampling(vsn_graph, "Vertex Sampling with Neighbourhood")
   <tbody>
     <tr>
       <th>0</th>
-      <td>993.0</td>
-      <td>4.07</td>
-      <td>7.05</td>
+      <td>736.0</td>
+      <td>3.25</td>
+      <td>3.14</td>
       <td>1.0</td>
       <td>2.0</td>
       <td>3.0</td>
       <td>4.0</td>
-      <td>168.0</td>
+      <td>59.0</td>
     </tr>
   </tbody>
 </table>
@@ -576,6 +741,8 @@ $$
 $$
 in which, compared to uniform distribution, more importance is given to edges that connect highly connected nodes in the network.
 
+Also in this case, the uniform distribution $\pi_{e_{ij}} = \frac{1}{|E|}$ can be used.
+
 
 
 ```python
@@ -588,21 +755,28 @@ def relabel_edge_index(node_ids, edge_index):
   return relabeled_edge_index
 
 
-def edge_sampling(graph, num_samples):
+def edge_sampling(graph, num_samples, uniform=False):
 
   num_unique_edges = int(num_samples * 0.5)
+  
   sorted_edge_index = torch.sort(graph.edge_index, dim=0)[0]
-
   degs = degree(sorted_edge_index[0], graph.num_nodes)
   t_edge_index = sorted_edge_index.t()
-  edge_probs = degs[t_edge_index[:,0:1].squeeze()] + degs[t_edge_index[:,1:2].squeeze()]
-  edge_probs = (edge_probs / torch.sum(edge_probs)).reshape(1, -1)
+  if not uniform:
+  
+    edge_probs = degs[t_edge_index[:,0:1].squeeze()] + degs[t_edge_index[:,1:2].squeeze()]
+    edge_probs = (edge_probs / torch.sum(edge_probs)).reshape(1, -1)
+  
+  else:
+    edge_probs = torch.ones((1, sorted_edge_index.shape[1])) / sorted_edge_index.shape[1]
 
   edge_index = torch.cat((sorted_edge_index, edge_probs))
 
   unique_edge_index, _ = torch.unique(edge_index, dim=1, return_inverse=True)
 
-  final_probs = 2 * unique_edge_index.t()[:,2:3].squeeze()
+  final_probs = (2 * unique_edge_index.t()[:,2:3].squeeze()).numpy()
+
+  final_probs =  final_probs / np.sum(final_probs)
 
   edge_samp_ids = np.sort(np.random.choice(unique_edge_index.shape[1],
                                            num_unique_edges,
@@ -628,8 +802,8 @@ def edge_sampling(graph, num_samples):
 
 
 ```python
-_, num_sample_edges = num_samples(graph, 0.9)
-es_graph = edge_sampling(graph, num_sample_edges)
+_, num_sample_edges = num_samples(graph, 0.85)
+es_graph = edge_sampling(graph, num_sample_edges, False)
 ```
 
 
@@ -637,21 +811,35 @@ es_graph = edge_sampling(graph, num_sample_edges)
 analyze_sampling(es_graph, "Edge Sampling")
 ```
 
-    Number of nodes: 648
-    Number of edges: 1054
+    Number of nodes: 884
+    Number of node features: 1433
+    Number of edges: 1582
     Has isolated nodes: False
     Has self-loops: False
     Is undirected: True
-    Average node degree: 1.63
+    Average node degree: 1.79
     Number of classes: 7
-    Number of connected components: 133
-    Average clustering coefficient: 0.01551
-    Density: 0.00251
-    Transitivity: 0.00332
+    Number of connected components: 149
+    Density: 0.00203
+    Average clustering coefficient: 0.03624
+    Transitivity: 0.00846
 
 
 
 <div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -669,14 +857,14 @@ analyze_sampling(es_graph, "Edge Sampling")
   <tbody>
     <tr>
       <th>0</th>
-      <td>648.0</td>
-      <td>1.63</td>
-      <td>4.31</td>
+      <td>884.0</td>
+      <td>1.79</td>
+      <td>4.85</td>
       <td>1.0</td>
       <td>1.0</td>
       <td>1.0</td>
-      <td>1.0</td>
-      <td>95.0</td>
+      <td>2.0</td>
+      <td>118.0</td>
     </tr>
   </tbody>
 </table>
@@ -725,15 +913,16 @@ Depending on how it is extracted from $Q$ we obtain the following algorithms:
 
 
 ```python
-def b_d_r_first_sampling(graph, extract, num_samples):
+def search_sampling(graph, extract, num_samples):
   if extract != "BFS" and extract != "DFS" and extract != "RFS":
     raise ValueError("extract must be BFS, DFS or RFS")
-
+  
+  degs = degree(graph.edge_index[0], graph.num_nodes)
   sample_nodes_ids = np.array([], dtype=int)
-  sample_edges = []
+  sample_edges = np.array([], dtype=int)
   visited = np.array([], dtype=int)
   start_id = np.random.choice(graph.num_nodes, 1, replace=False)
-  edges_in_queue = []
+  edges_in_queue = np.array([], dtype=int)
   queue = np.array([], dtype=int)
   queue = np.append(queue, start_id)
   while len(sample_nodes_ids) < num_samples:
@@ -744,7 +933,9 @@ def b_d_r_first_sampling(graph, extract, num_samples):
       node_id = queue[-1]
       queue = queue[:-1]
     elif extract == "RFS":
-      id = np.random.choice(len(queue), 1)
+      curr_degs = degs[queue].numpy()
+      probs = curr_degs / np.sum(curr_degs)
+      id = np.random.choice(len(queue), 1, p=probs)
       node_id = queue[id].item()
       queue = np.delete(queue, [id])
 
@@ -757,19 +948,24 @@ def b_d_r_first_sampling(graph, extract, num_samples):
       if neigh not in visited and neigh not in queue:
         queue = np.append(queue, neigh)
         edge = np.array([node_id, neigh])
-        edges_in_queue.append(edge)
+        edges_in_queue = np.vstack([edges_in_queue, edge]) if edges_in_queue.size else edge
+        
 
     if len(sample_nodes_ids) > 0:
+      i = 0
       for edge in edges_in_queue:
-        if edge[0] == node_id or edge[1] == node_id:
-          sample_edges.append(edge)
+        if edge[1] == node_id:
+          sample_edges = np.vstack([sample_edges, edge]) if sample_edges.size else edge
           break
-      edges_in_queue = [e for e in edges_in_queue if not np.array_equal(e, edge)]
+        i += 1
+      edges_in_queue = np.delete(edges_in_queue, i, axis=0)
 
 
     sample_nodes_ids = np.append(sample_nodes_ids, node_id)
 
+
   sample_edges = torch.tensor(np.array(sample_edges)).t()
+  sample_edges = to_undirected(sample_edges)
   sample_nodes = graph.x[sample_nodes_ids]
   sample_y = graph.y[sample_nodes_ids]
 
@@ -783,7 +979,7 @@ def b_d_r_first_sampling(graph, extract, num_samples):
 
 ```python
 num_samples_nodes, _ = num_samples(graph, 0.7)
-bfs_graph = b_d_r_first_sampling(graph, "BFS", num_samples_nodes)
+bfs_graph = search_sampling(graph, "BFS", num_samples_nodes)
 ```
 
 
@@ -792,21 +988,34 @@ analyze_sampling(bfs_graph, "Breadth First Sampling")
 ```
 
     Number of nodes: 812
-    Number of edges: 811
+    Number of node features: 1433
+    Number of edges: 1622
     Has isolated nodes: False
     Has self-loops: False
-    Is undirected: False
-    Average node degree: 1.00
+    Is undirected: True
+    Average node degree: 2.00
     Number of classes: 7
     Number of connected components: 1
-    Average clustering coefficient: 0.00000
     Density: 0.00246
+    Average clustering coefficient: 0.00000
     Transitivity: 0.00000
 
 
 
 <div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
 
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -826,12 +1035,12 @@ analyze_sampling(bfs_graph, "Breadth First Sampling")
       <th>0</th>
       <td>812.0</td>
       <td>2.0</td>
-      <td>6.9</td>
+      <td>6.25</td>
       <td>1.0</td>
       <td>1.0</td>
       <td>1.0</td>
       <td>1.0</td>
-      <td>161.0</td>
+      <td>155.0</td>
     </tr>
   </tbody>
 </table>
@@ -864,7 +1073,7 @@ analyze_sampling(bfs_graph, "Breadth First Sampling")
 
 
 ```python
-depth_graph = b_d_r_first_sampling(graph, "DFS", num_samples_nodes)
+depth_graph = search_sampling(graph, "DFS", num_samples_nodes)
 ```
 
 
@@ -873,21 +1082,34 @@ analyze_sampling(depth_graph, "Depth First Sampling")
 ```
 
     Number of nodes: 812
-    Number of edges: 811
+    Number of node features: 1433
+    Number of edges: 1622
     Has isolated nodes: False
     Has self-loops: False
-    Is undirected: False
-    Average node degree: 1.00
+    Is undirected: True
+    Average node degree: 2.00
     Number of classes: 7
     Number of connected components: 1
-    Average clustering coefficient: 0.00000
     Density: 0.00246
+    Average clustering coefficient: 0.00000
     Transitivity: 0.00000
 
 
 
 <div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
 
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -907,12 +1129,12 @@ analyze_sampling(depth_graph, "Depth First Sampling")
       <th>0</th>
       <td>812.0</td>
       <td>2.0</td>
-      <td>1.31</td>
+      <td>1.13</td>
       <td>1.0</td>
       <td>1.0</td>
       <td>2.0</td>
       <td>2.0</td>
-      <td>13.0</td>
+      <td>7.0</td>
     </tr>
   </tbody>
 </table>
@@ -945,7 +1167,7 @@ analyze_sampling(depth_graph, "Depth First Sampling")
 
 
 ```python
-rfs_graph = b_d_r_first_sampling(graph, "RFS", num_samples_nodes)
+rfs_graph = search_sampling(graph, "RFS", num_samples_nodes)
 ```
 
 
@@ -954,21 +1176,34 @@ analyze_sampling(rfs_graph, "Random First Sampling")
 ```
 
     Number of nodes: 812
-    Number of edges: 811
+    Number of node features: 1433
+    Number of edges: 1622
     Has isolated nodes: False
     Has self-loops: False
-    Is undirected: False
-    Average node degree: 1.00
+    Is undirected: True
+    Average node degree: 2.00
     Number of classes: 7
     Number of connected components: 1
-    Average clustering coefficient: 0.00000
     Density: 0.00246
+    Average clustering coefficient: 0.00000
     Transitivity: 0.00000
 
 
 
 <div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
 
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -988,12 +1223,12 @@ analyze_sampling(rfs_graph, "Random First Sampling")
       <th>0</th>
       <td>812.0</td>
       <td>2.0</td>
-      <td>2.58</td>
+      <td>4.4</td>
       <td>1.0</td>
       <td>1.0</td>
       <td>1.0</td>
       <td>2.0</td>
-      <td>31.0</td>
+      <td>101.0</td>
     </tr>
   </tbody>
 </table>
@@ -1047,7 +1282,6 @@ def snow_ball_sampling(graph, start_dim, num_iter, k):
   v.update(node_samp_ids.flatten())
   all_nodes.update(v)
   all_edges = []
-  node_dist_dict = {}
 
   for _ in range(num_iter):
 
@@ -1060,40 +1294,19 @@ def snow_ball_sampling(graph, start_dim, num_iter, k):
                                                      1,
                                                      graph.edge_index)
 
-      if not node_id in node_dist_dict:
-        node_dist_dict[node_id] = 1
-      else:
-        node_dist_dict[node_id] += 1
-
       mask = neighs != node_id
       neighs = neighs[mask]
       
-      if(len(neighs) <= k):
-        all_neighs.update(neighs.numpy().flatten())
-
-        for n in neighs:
-          n = n.item()
-          all_edges.append([node_id, n])
-
-          if not n in node_dist_dict:
-            node_dist_dict[n] = 1
-          else:
-            node_dist_dict[n] += 1
-
-      else:
+      if(len(neighs) > k):
         neighs_deg = degs[neighs].numpy()
         probs = neighs_deg / np.sum(neighs_deg)
-        k_neighs = np.random.choice(neighs, k, replace=False, p=probs)
-        all_neighs.update(k_neighs.flatten())
+        neighs = np.random.choice(neighs, k, replace=False, p=probs)
+      
+      all_neighs.update(neighs.flatten())
 
-        for n in k_neighs:
-          n = n.item()
-          all_edges.append([node_id, n])
-
-          if not n in node_dist_dict:
-            node_dist_dict[n] = 1
-          else:
-            node_dist_dict[n] += 1
+      for n in neighs:
+        n = n.item()
+        all_edges.append([node_id, n])
 
     v_tilde.update(all_neighs)
     v = v_tilde - all_nodes
@@ -1110,34 +1323,48 @@ def snow_ball_sampling(graph, start_dim, num_iter, k):
 
   sample_graph = Data(x=sample_nodes, edge_index=relabeled_edge_index, y=sample_y)
 
-  return sample_graph, node_dist_dict
+  return sample_graph
 ```
 
 
 ```python
-sbs_graph, node_dist_dict = snow_ball_sampling(graph, 10, 8, 3)
+sbs_graph = snow_ball_sampling(graph, 30, 5, 3)
 ```
 
 
 ```python
-analyze_sampling(sbs_graph, "Snow-Ball Sampling", node_dist_dict)
+analyze_sampling(sbs_graph, "Snow-Ball Sampling")
 ```
 
-    Number of nodes: 782
-    Number of edges: 2622
+    Number of nodes: 969
+    Number of node features: 1433
+    Number of edges: 3160
     Has isolated nodes: False
     Has self-loops: False
     Is undirected: True
-    Average node degree: 3.35
+    Average node degree: 3.26
     Number of classes: 7
-    Number of connected components: 2
-    Average clustering coefficient: 0.15276
-    Density: 0.00429
-    Transitivity: 0.11266
+    Number of connected components: 3
+    Density: 0.00337
+    Average clustering coefficient: 0.15099
+    Transitivity: 0.10672
 
 
 
 <div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -1155,14 +1382,14 @@ analyze_sampling(sbs_graph, "Snow-Ball Sampling", node_dist_dict)
   <tbody>
     <tr>
       <th>0</th>
-      <td>782.0</td>
-      <td>3.35</td>
-      <td>2.93</td>
+      <td>969.0</td>
+      <td>3.26</td>
+      <td>3.21</td>
       <td>1.0</td>
-      <td>2.0</td>
+      <td>1.0</td>
       <td>3.0</td>
       <td>4.0</td>
-      <td>59.0</td>
+      <td>57.0</td>
     </tr>
   </tbody>
 </table>
@@ -1193,19 +1420,13 @@ analyze_sampling(sbs_graph, "Snow-Ball Sampling", node_dist_dict)
     
 
 
-
-    
-![png](graph_sampling_files/graph_sampling_49_6.png)
-    
-
-
 ### Forest Fire Sampling (FFS)
 
 It is like Snow-Ball Sampling with the only difference that the number $k$ of neighbors to sample from each node at each iteration is not a fixed number, but is generated according to $K \sim \texttt{Geometric} (p)$. If $p=\frac{1}{k}$ then we have that $\mathbb{E}[K]=k$ the two techniques coincide on average.
 
 
 ```python
-def forest_fire_sampling(graph, num_iter, start_dim, p):
+def forest_fire_sampling(graph, start_dim, num_iter, p):
   
   graph.edge_index = sort_edge_index(graph.edge_index)
   degs = degree(graph.edge_index[0], graph.num_nodes)
@@ -1216,7 +1437,6 @@ def forest_fire_sampling(graph, num_iter, start_dim, p):
   v.update(node_samp_ids.flatten())
   all_nodes.update(v)
   all_edges = []
-  node_dist_dict = {}
 
   for _ in range(num_iter):
 
@@ -1230,42 +1450,22 @@ def forest_fire_sampling(graph, num_iter, start_dim, p):
                                                      1,
                                                      graph.edge_index)
 
-      if not node_id in node_dist_dict:
-        node_dist_dict[node_id] = 1
-      else:
-        node_dist_dict[node_id] += 1
-
       k = np.random.geometric(p)
       
       mask = neighs != node_id
       neighs = neighs[mask]
       
-      if(len(neighs) <= k):
-        all_neighs.update(neighs.numpy().flatten())
-
-        for n in neighs:
-          n = n.item()
-          all_edges.append([node_id, n])
-
-          if not n in node_dist_dict:
-            node_dist_dict[n] = 1
-          else:
-            node_dist_dict[n] += 1
-
-      else:
+      if(len(neighs) > k):
         neighs_deg = degs[neighs].numpy()
         probs = neighs_deg / np.sum(neighs_deg)
-        k_neighs = np.random.choice(neighs, k, replace=False, p=probs)
-        all_neighs.update(k_neighs.flatten())
+        neighs = np.random.choice(neighs, k, replace=False, p=probs)
+      
+      all_neighs.update(neighs.flatten())
 
-        for n in k_neighs:
-          n = n.item()
-          all_edges.append([node_id, n])
+      for n in neighs:
+        n = n.item()
+        all_edges.append([node_id, n])
 
-          if not n in node_dist_dict:
-            node_dist_dict[n] = 1
-          else:
-            node_dist_dict[n] += 1
 
     v_tilde.update(all_neighs)
     v = v_tilde - all_nodes
@@ -1282,35 +1482,48 @@ def forest_fire_sampling(graph, num_iter, start_dim, p):
 
   sample_graph = Data(x=sample_nodes, edge_index=relabeled_edge_index, y=sample_y)
 
-  return sample_graph, node_dist_dict
+  return sample_graph
 ```
 
 
 ```python
-ffs_graph, node_dist_dict = forest_fire_sampling(graph, 8, 10, p=0.33)
+ffs_graph = forest_fire_sampling(graph, 30, 6, p=0.33)
 ```
 
 
 ```python
-analyze_sampling(ffs_graph, "Forest Fire Sampling", node_dist_dict)
+analyze_sampling(ffs_graph, "Forest Fire Sampling")
 ```
 
-    Number of nodes: 515
-    Number of edges: 1538
+    Number of nodes: 1034
+    Number of node features: 1433
+    Number of edges: 3546
     Has isolated nodes: False
     Has self-loops: False
     Is undirected: True
-    Average node degree: 2.99
+    Average node degree: 3.43
     Number of classes: 7
-    Number of connected components: 3
-    Average clustering coefficient: 0.15060
-    Density: 0.00581
-    Transitivity: 0.11757
+    Number of connected components: 2
+    Density: 0.00332
+    Average clustering coefficient: 0.18243
+    Transitivity: 0.11374
 
 
 
 <div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
 
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -1328,14 +1541,14 @@ analyze_sampling(ffs_graph, "Forest Fire Sampling", node_dist_dict)
   <tbody>
     <tr>
       <th>0</th>
-      <td>515.0</td>
-      <td>2.99</td>
-      <td>2.48</td>
+      <td>1034.0</td>
+      <td>3.43</td>
+      <td>3.53</td>
       <td>1.0</td>
       <td>2.0</td>
-      <td>2.0</td>
+      <td>3.0</td>
       <td>4.0</td>
-      <td>40.0</td>
+      <td>55.0</td>
     </tr>
   </tbody>
 </table>
@@ -1366,12 +1579,6 @@ analyze_sampling(ffs_graph, "Forest Fire Sampling", node_dist_dict)
     
 
 
-
-    
-![png](graph_sampling_files/graph_sampling_53_6.png)
-    
-
-
 ### Random Walk
 
 Start from a random node $v_0 \in V$, insert it into $V_S$, and at each step, until a certain termination condition is reached:
@@ -1390,7 +1597,7 @@ def random_walk_sampling(graph, num_samples, force, start=None, relabel=True):
   probs = degs / torch.sum(degs)
   
   if start is None:
-    curr_id = np.random.choice(graph.num_nodes, 1, replace=False)
+    curr_id = np.random.choice(graph.num_nodes, 1, replace=False, p=probs)
     curr_id = curr_id.item()
   else:
     curr_id = start
@@ -1400,8 +1607,9 @@ def random_walk_sampling(graph, num_samples, force, start=None, relabel=True):
   node_ids = np.append(node_ids, curr_id)
   node_dist_dict = {}
   n_it = 0
-
-  while len(node_ids) < num_samples:
+  max_it_before_exit = 10000
+  
+  while len(node_ids) < num_samples and n_it < max_it_before_exit:
     n_it += 1
     neighs, _, _, _  = k_hop_subgraph(torch.tensor([curr_id]),
                                                      1,
@@ -1422,6 +1630,7 @@ def random_walk_sampling(graph, num_samples, force, start=None, relabel=True):
       node_ids = np.append(node_ids, new_id)
 
     edges.append([curr_id, new_id])
+      
     curr_id = new_id
 
 
@@ -1439,7 +1648,9 @@ def random_walk_sampling(graph, num_samples, force, start=None, relabel=True):
 
   else:
     sample_graph = Data(x=sample_nodes, edge_index=sample_edges, y=sample_y)
-
+    
+  if n_it >= max_it_before_exit:
+    print("Max iterations reached. Exiting because stucked")
 
   if not force:
     print("In ", num_samples, " iterations ", len(node_ids), " different nodes were explored by ", len(edges), " different edges")
@@ -1451,11 +1662,11 @@ def random_walk_sampling(graph, num_samples, force, start=None, relabel=True):
 
 
 ```python
-num_samples_nodes, _ = num_samples(graph, 0.85)
+num_samples_nodes, _ = num_samples(graph, 0.7)
 rw_graph, node_dist_dict = random_walk_sampling(graph, num_samples_nodes, True)
 ```
 
-    1048 iterations required to explore  406  different nodes
+    2928 iterations required to explore  812  different nodes
 
 
 
@@ -1463,22 +1674,35 @@ rw_graph, node_dist_dict = random_walk_sampling(graph, num_samples_nodes, True)
 analyze_sampling(rw_graph, "Random Walk Sampling", node_dist_dict)
 ```
 
-    Number of nodes: 406
-    Number of edges: 1058
+    Number of nodes: 812
+    Number of node features: 1433
+    Number of edges: 2426
     Has isolated nodes: False
     Has self-loops: False
     Is undirected: True
-    Average node degree: 2.61
+    Average node degree: 2.99
     Number of classes: 7
     Number of connected components: 1
-    Average clustering coefficient: 0.13014
-    Density: 0.00643
-    Transitivity: 0.02094
+    Density: 0.00368
+    Average clustering coefficient: 0.16530
+    Transitivity: 0.03079
 
 
 
 <div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
 
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -1496,14 +1720,14 @@ analyze_sampling(rw_graph, "Random Walk Sampling", node_dist_dict)
   <tbody>
     <tr>
       <th>0</th>
-      <td>406.0</td>
-      <td>2.61</td>
-      <td>5.89</td>
+      <td>812.0</td>
+      <td>2.99</td>
+      <td>6.51</td>
       <td>1.0</td>
       <td>1.0</td>
       <td>2.0</td>
-      <td>2.0</td>
-      <td>104.0</td>
+      <td>3.0</td>
+      <td>151.0</td>
     </tr>
   </tbody>
 </table>
@@ -1582,8 +1806,12 @@ def random_walk_sampling_escaping(graph, num_samples, force, escape_prob):
     
     neighs[curr_pos] = escape_id
     probs = np.zeros_like(neighs_deg)
-    probs[curr_pos] = escape_prob
     probs = neighs_deg / np.sum(neighs_deg)
+    probs = probs - (escape_prob / (len(neighs) -1))
+    # truncate negative values
+    probs[probs < 0] = 0
+    probs[curr_pos] = escape_prob
+    probs = probs / np.sum(probs)
     new_id = np.random.choice(neighs, 1, replace=False, p = probs)
     new_id = new_id.item()
 
@@ -1609,18 +1837,16 @@ def random_walk_sampling_escaping(graph, num_samples, force, escape_prob):
   else:
     print(n_it, "iterations required to explore ", len(node_ids), " different nodes")
 
-  
-
   return sample_graph, node_dist_dict
 
 ```
 
 
 ```python
-rwe_sampling, node_dist_dict = random_walk_sampling_escaping(graph, num_samples_nodes, force=True, escape_prob=0.1)
+rwe_sampling, node_dist_dict = random_walk_sampling_escaping(graph, num_samples_nodes, force=True, escape_prob=0.2)
 ```
 
-    1171 iterations required to explore  406  different nodes
+    1556 iterations required to explore  812  different nodes
 
 
 
@@ -1628,21 +1854,35 @@ rwe_sampling, node_dist_dict = random_walk_sampling_escaping(graph, num_samples_
 analyze_sampling(rwe_sampling, "Random Walk with Escaping", node_dist_dict)
 ```
 
-    Number of nodes: 406
-    Number of edges: 1072
+    Number of nodes: 812
+    Number of node features: 1433
+    Number of edges: 2204
     Has isolated nodes: False
     Has self-loops: False
     Is undirected: True
-    Average node degree: 2.64
+    Average node degree: 2.71
     Number of classes: 7
     Number of connected components: 1
-    Average clustering coefficient: 0.18602
-    Density: 0.00652
-    Transitivity: 0.02312
+    Density: 0.00335
+    Average clustering coefficient: 0.05829
+    Transitivity: 0.01998
 
 
 
 <div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -1660,14 +1900,14 @@ analyze_sampling(rwe_sampling, "Random Walk with Escaping", node_dist_dict)
   <tbody>
     <tr>
       <th>0</th>
-      <td>406.0</td>
-      <td>2.64</td>
-      <td>6.71</td>
-      <td>1.0</td>
+      <td>812.0</td>
+      <td>2.71</td>
+      <td>3.82</td>
       <td>1.0</td>
       <td>2.0</td>
       <td>2.0</td>
-      <td>124.0</td>
+      <td>3.0</td>
+      <td>79.0</td>
     </tr>
   </tbody>
 </table>
@@ -1701,184 +1941,6 @@ analyze_sampling(rwe_sampling, "Random Walk with Escaping", node_dist_dict)
 
     
 ![png](graph_sampling_files/graph_sampling_61_6.png)
-    
-
-
-### Metropolis-Hastings Random Walk
-
-It is an algorithm usually used to obtain a certain desired distribution on the nodes. Denoted by $P_{uv}$ the matrix with the transition probabilities $u \to v$ and by $\pi_u$ the value of the distribution $\boldsymbol{\pi}$ on $u$, we have:
-$$
-P_{uv} =
-\begin{cases}
-M_{uv} \cdot \min\left\{1, \frac{\pi_v}{\pi_u} \right\} \qquad & u \neq v \:\land \: v \in \mathcal{N}( u)\\
-0 & u \neq v \: \land \: v \notin \mathcal{N}(u)\\
-1 - \sum_{w \in V} P_{uw} & u = v
-\end{cases}
-$$
-Where $M_{uv}=M_{vu}$ is a normalization constant for the node pair $(u,v)$. A small value of $M_{uv}$ underweights all the probabilities of undertaking an outgoing edge from $u$ and consequently gives high importance to self-loops and dilates the mixing time for the desired node distribution. A classic choice is $M_{uv} = \min \left\{\frac{1}{d_G(u)}, \frac{1}{d_G(v)}\right\}$.
-
-In accordance with what was said before, we will use $\boldsymbol{\pi}$ as distribution:
-$$
-\forall v \in V \quad \pi_v = \frac{d_G(v)}{\sum_{u \in V} d_G(u)} \:\:\implies\:\: \min\left\{1 , \frac{\pi_v}{\pi_u} \right\} = \min\left\{1, \frac{d_G(v)}{d_G(u)} \right\}
-$$
-in order to promote travel to very crowded areas of the network.
-
-Leaving this aside, the procedure is identical to the random walk: it starts from a node $v_0\in V$ and, at each step it samples, starting from the current $v_i$ it samples the next $v_{i+1}$ to which it moves and update $V_S = V_S \cup \{v_{i+1}\}$, $E_S = E_S \cup \{\{v_{i}, v_{i+1}\}\}$.
-
-
-```python
-def metropolis_hastings_random_walk_sampling(graph, num_samples, force):
-  
-  graph.edge_index = sort_edge_index(graph.edge_index)
-  degs = degree(graph.edge_index[0], graph.num_nodes)
-  probs = degs / torch.sum(degs)
-  curr_id = np.random.choice(graph.num_nodes, 1, replace=False, p=probs)
-  curr_id = curr_id.item()
-  edges = []
-  node_ids = np.array([], dtype=int)
-  node_ids = np.append(node_ids, curr_id)
-  node_dist_dict = {}
-  n_it = 0
-
-  while len(node_ids) < num_samples:
-    n_it = n_it + 1
-    neighs, _, _, _  = k_hop_subgraph(torch.tensor([curr_id]),
-                                                     1,
-                                                     graph.edge_index)
-    if not curr_id in node_dist_dict:
-      node_dist_dict[curr_id] = 1
-    else:
-      node_dist_dict[curr_id] += 1
-
-    neighs_deg = degs[neighs].numpy()
-    probs = np.zeros_like(neighs, dtype=float)
-    curr_pos = np.where(neighs == curr_id)[0].item()
-
-    for j in range(len(neighs)):
-      if j != curr_pos:
-        prob = min(1/neighs_deg[j],  1/ neighs_deg[curr_pos]) * min(1, neighs_deg[j]/neighs_deg[curr_pos])
-        probs[j] = prob
-
-    probs[curr_pos] = 1 - np.sum(probs)
-    probs = np.clip(probs, 0, None)
-    probs = probs / np.sum(probs)
-
-    new_id = np.random.choice(neighs, 1, p=probs)
-    new_id = new_id.item()
-
-    if not force or new_id not in node_ids:
-      node_ids = np.append(node_ids, new_id)
-
-    edges.append([curr_id, new_id])
-    curr_id = new_id
-
-  node_ids = np.unique(node_ids)
-  edges = np.unique(np.array(edges), axis=0)
-  sample_edges = torch.tensor(edges).t()
-  sample_edges, _ = remove_self_loops(sample_edges)
-  sample_edges = to_undirected(sample_edges)
-  sample_nodes = graph.x[node_ids]
-  sample_y = graph.y[node_ids]
-  relabeled_edge_index = relabel_edge_index(node_ids, sample_edges)
-  sample_graph = Data(x=sample_nodes, edge_index=relabeled_edge_index, y=sample_y)
-
-  if not force:
-    print("In ", num_samples, " iterations ", len(node_ids), " different nodes were explored by ", sample_edges.shape[1], " different edges")
-  else:
-    print(n_it, "iterations required to explore ", len(node_ids), " different nodes")
-
-
-  return sample_graph, node_dist_dict
-```
-
-
-```python
-num_samples_nodes, _ = num_samples(graph, 0.85)
-mhrw_graph, node_dist_dict = metropolis_hastings_random_walk_sampling(graph, num_samples_nodes, force=True)
-```
-
-    2080 iterations required to explore  406  different nodes
-
-
-
-```python
-analyze_sampling(mhrw_graph, "Metropolis-Hastings Random Walk Sampling", node_dist_dict)
-```
-
-    Number of nodes: 406
-    Number of edges: 1000
-    Has isolated nodes: False
-    Has self-loops: False
-    Is undirected: True
-    Average node degree: 2.46
-    Number of classes: 7
-    Number of connected components: 1
-    Average clustering coefficient: 0.09037
-    Density: 0.00608
-    Transitivity: 0.12659
-
-
-
-<div>
-
-<table border="1" class="dataframe">
-  <thead>
-    <tr style="text-align: right;">
-      <th></th>
-      <th>count</th>
-      <th>mean</th>
-      <th>std</th>
-      <th>min</th>
-      <th>25%</th>
-      <th>50%</th>
-      <th>75%</th>
-      <th>max</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th>0</th>
-      <td>406.0</td>
-      <td>2.46</td>
-      <td>1.19</td>
-      <td>1.0</td>
-      <td>2.0</td>
-      <td>2.0</td>
-      <td>3.0</td>
-      <td>10.0</td>
-    </tr>
-  </tbody>
-</table>
-</div>
-
-
-
-    
-![png](graph_sampling_files/graph_sampling_65_2.png)
-    
-
-
-
-    
-![png](graph_sampling_files/graph_sampling_65_3.png)
-    
-
-
-
-    
-![png](graph_sampling_files/graph_sampling_65_4.png)
-    
-
-
-
-    
-![png](graph_sampling_files/graph_sampling_65_5.png)
-    
-
-
-
-    
-![png](graph_sampling_files/graph_sampling_65_6.png)
     
 
 
@@ -1931,15 +1993,20 @@ def multiple_independent_random_walkers(graph, num_samples, num_random_walks, fo
 
 
 ```python
-num_samples_nodes, _ = num_samples(graph, 0.85)
-mirw_graph, node_dist_dict = multiple_independent_random_walkers(graph, num_samples_nodes, 5, force=True)
+num_samples_nodes, _ = num_samples(graph, 0.5)
+mirw_graph, node_dist_dict = multiple_independent_random_walkers(graph, num_samples_nodes, 10, force=True)
 ```
 
-    147 iterations required to explore  81  different nodes
-    143 iterations required to explore  81  different nodes
-    156 iterations required to explore  81  different nodes
-    147 iterations required to explore  81  different nodes
-    160 iterations required to explore  81  different nodes
+    254 iterations required to explore  135  different nodes
+    318 iterations required to explore  135  different nodes
+    282 iterations required to explore  135  different nodes
+    295 iterations required to explore  135  different nodes
+    309 iterations required to explore  135  different nodes
+    244 iterations required to explore  135  different nodes
+    284 iterations required to explore  135  different nodes
+    280 iterations required to explore  135  different nodes
+    289 iterations required to explore  135  different nodes
+    272 iterations required to explore  135  different nodes
 
 
 
@@ -1947,22 +2014,35 @@ mirw_graph, node_dist_dict = multiple_independent_random_walkers(graph, num_samp
 analyze_sampling(mirw_graph, "Multiple Independent Random Walkers", node_dist_dict)
 ```
 
-    Number of nodes: 338
-    Number of edges: 856
+    Number of nodes: 737
+    Number of node features: 1433
+    Number of edges: 2200
     Has isolated nodes: False
     Has self-loops: False
     Is undirected: True
-    Average node degree: 2.53
+    Average node degree: 2.99
     Number of classes: 7
     Number of connected components: 1
-    Average clustering coefficient: 0.14086
-    Density: 0.00751
-    Transitivity: 0.05191
+    Density: 0.00406
+    Average clustering coefficient: 0.18414
+    Transitivity: 0.03166
 
 
 
 <div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
 
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -1980,14 +2060,205 @@ analyze_sampling(mirw_graph, "Multiple Independent Random Walkers", node_dist_di
   <tbody>
     <tr>
       <th>0</th>
-      <td>338.0</td>
-      <td>2.53</td>
-      <td>3.5</td>
+      <td>737.0</td>
+      <td>2.99</td>
+      <td>6.73</td>
       <td>1.0</td>
       <td>1.0</td>
       <td>2.0</td>
       <td>3.0</td>
-      <td>54.0</td>
+      <td>147.0</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+
+
+    
+![png](graph_sampling_files/graph_sampling_65_2.png)
+    
+
+
+
+    
+![png](graph_sampling_files/graph_sampling_65_3.png)
+    
+
+
+
+    
+![png](graph_sampling_files/graph_sampling_65_4.png)
+    
+
+
+
+    
+![png](graph_sampling_files/graph_sampling_65_5.png)
+    
+
+
+
+    
+![png](graph_sampling_files/graph_sampling_65_6.png)
+    
+
+
+###  Multi-Dimensional Random Walk (MDRW) or Frontier Sampling (FS)
+
+It was born with the idea of alleviating one of the problems of sampling methods based on random walk: it is easy for exploration to get trapped in dense regions and not be able to escape. The algorithm works like this:
+- Initialize a list $L=(v_0, v_1, \dots, v_l)$ with $l$ vertices according to some distribution. Initialize $V_S = E_S = \emptyset$;
+- At each step, until termination, choose a node $v_i \in L$ with probability $p(v_i) \propto d_G(v_i)$ and:
+  - sample a neighbor $v_j \in \mathcal{N}(v_i)$;
+  - update $E_S = E_S \cup \{\{v_i, v_j\}\}$;
+  - update $V_S = V_S \cup \{v_i\} \cup \{v_j\}$;
+  - replace $v_j$ with $v_i$ in list $L$.
+
+The procedure continues for a certain fixed number of iterations or until a certain fixed number of nodes has been explored. The subgraph $G_S=(V_E, E_S)$ will be composed of all the sampled edges and all the nodes $V_S$ incident to them.
+
+
+```python
+def frontier_sampling(graph, num_samples,  num_random_walks, force):
+ 
+  graph.edge_index = sort_edge_index(graph.edge_index)
+  degs = degree(graph.edge_index[0], graph.num_nodes)
+  probs = degs / torch.sum(degs)
+  node_samp_ids = np.random.choice(graph.num_nodes, num_random_walks, replace=False, p=probs)
+
+  curr_degs = degs[node_samp_ids].numpy()
+  L = torch.tensor(node_samp_ids)
+  edges = []
+  node_ids = np.array([], dtype=int)
+  
+  for n in node_samp_ids:
+    node_ids = np.append(node_ids, n.item())
+    
+  node_dist_dict = {}
+  n_it = 0
+  max_it_before_exit = 10000
+
+  while len(node_ids) < num_samples and n_it < max_it_before_exit:
+    n_it += 1
+
+    curr_probs = curr_degs / np.sum(curr_degs)
+    curr_id = np.random.choice(L, 1, replace=False, p=curr_probs)
+    curr_id = curr_id.item()
+    neighs, _, _, _  = k_hop_subgraph([curr_id],
+                                      1,
+                                      graph.edge_index)
+
+    if not curr_id in node_dist_dict:
+      node_dist_dict[curr_id] =  1
+    else:
+      node_dist_dict[curr_id] += 1
+
+    mask = neighs != curr_id
+    neighs = neighs[mask]
+    neighs_deg = degs[neighs].numpy()
+    neighs_probs = neighs_deg / np.sum(neighs_deg)
+    new_id = np.random.choice(neighs, 1, replace=False, p = neighs_probs)
+    new_id = new_id.item()
+    new_pos = np.where(neighs == new_id)[0].item()
+    
+    if not force or new_id not in node_ids:
+      node_ids = np.append(node_ids, new_id)
+
+    edges.append([curr_id, new_id])
+      
+    mask = L.eq(curr_id)
+    L[mask] = new_id
+    curr_degs[mask] = neighs_deg[new_pos].item()
+
+
+  node_ids = np.unique(node_ids)
+  edges = np.unique(np.array(edges), axis=0)
+  sample_edges = torch.tensor(edges).t()
+  sample_edges, _ = remove_self_loops(sample_edges)
+  sample_edges = to_undirected(sample_edges)
+  sample_nodes = graph.x[node_ids]
+  sample_y = graph.y[node_ids]
+  relabeled_edge_index = relabel_edge_index(node_ids, sample_edges)
+  sample_graph = Data(x=sample_nodes, edge_index=relabeled_edge_index, y=sample_y)
+
+  if not force:
+    print("In ", num_samples, " iterations ", len(node_ids), " different nodes were explored by ", sample_edges.shape[1], " different edges")
+  else:
+    print(n_it, "iterations required to explore ", len(node_ids), " different nodes")
+
+  if n_it >= max_it_before_exit:
+    print("Max iterations reached. Exiting because stucked")
+
+  return sample_graph, node_dist_dict
+```
+
+
+```python
+num_samples_nodes, _ = num_samples(graph, 0.7)
+fs_graph, node_dist_dict = frontier_sampling(graph, num_samples_nodes, 20, force=True)
+```
+
+    2868 iterations required to explore  812  different nodes
+
+
+
+```python
+analyze_sampling(fs_graph, "Frontier Sampling", node_dist_dict)
+```
+
+    Number of nodes: 812
+    Number of node features: 1433
+    Number of edges: 2440
+    Has isolated nodes: False
+    Has self-loops: False
+    Is undirected: True
+    Average node degree: 3.00
+    Number of classes: 7
+    Number of connected components: 2
+    Density: 0.00371
+    Average clustering coefficient: 0.16992
+    Transitivity: 0.04531
+
+
+
+<div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
+<table border="1" class="dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th></th>
+      <th>count</th>
+      <th>mean</th>
+      <th>std</th>
+      <th>min</th>
+      <th>25%</th>
+      <th>50%</th>
+      <th>75%</th>
+      <th>max</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th>0</th>
+      <td>812.0</td>
+      <td>3.0</td>
+      <td>5.35</td>
+      <td>1.0</td>
+      <td>1.0</td>
+      <td>2.0</td>
+      <td>3.0</td>
+      <td>110.0</td>
     </tr>
   </tbody>
 </table>
@@ -2024,69 +2295,75 @@ analyze_sampling(mirw_graph, "Multiple Independent Random Walkers", node_dist_di
     
 
 
-###  Multi-Dimensional Random Walk (MDRW) or Frontier Sampling (FS)
+### Metropolis-Hastings Random Walk
 
-It was born with the idea of alleviating one of the problems of sampling methods based on random walk: it is easy for exploration to get trapped in dense regions and not be able to escape. The algorithm works like this:
-- Initialize a list $L=(v_0, v_1, \dots, v_l)$ with $l$ vertices according to some distribution. Initialize $V_S = E_S = \emptyset$;
-- At each step, until termination, choose a node $v_i \in L$ with probability $p(v_i) \propto d_G(v_i)$ and:
-  - sample a neighbor $v_j \in \mathcal{N}(v_i)$;
-  - update $E_S = E_S \cup \{\{v_i, v_j\}\}$;
-  - update $V_S = V_S \cup \{v_i\} \cup \{v_j\}$;
-  - replace $v_j$ with $v_i$ in list $L$.
+It is an algorithm usually used to obtain a certain desired distribution on the nodes. Denoted by $P_{uv}$ the matrix with the transition probabilities $u \to v$ and by $\pi_u$ the value of the distribution $\boldsymbol{\pi}$ on $u$, we have:
+$$
+P_{uv} =
+\begin{cases}
+M_{uv} \cdot \min\left\{1, \frac{\pi_v}{\pi_u} \right\} \qquad & u \neq v \:\land \: v \in \mathcal{N}( u)\\
+0 & u \neq v \: \land \: v \notin \mathcal{N}(u)\\
+1 - \sum_{w \in V} P_{uw} & u = v
+\end{cases}
+$$
+Where $M_{uv}=M_{vu}$ is a normalization constant for the node pair $(u,v)$. A small value of $M_{uv}$ underweights all the probabilities of undertaking an outgoing edge from $u$ and consequently gives high importance to self-loops and dilates the mixing time for the desired node distribution. A classic choice is $M_{uv} = \min \left\{\frac{1}{d_G(u)}, \frac{1}{d_G(v)}\right\}$.
 
-The procedure continues for a certain fixed number of iterations or until a certain fixed number of nodes has been explored. The subgraph $G_S=(V_E, E_S)$ will be composed of all the sampled edges and all the nodes $V_S$ incident to them.
+In accordance with what was said before, we will use $\boldsymbol{\\pi}$ as distribution:
+
+$$ \forall v \in V \quad \pi_v = \frac{d_G(v)}{\sum_{u \in V} d_G(u)} \:\:\implies\:\: \min\left\{1 , \frac{\pi_v}{\pi_u} \right\} = \min\left\{1, \frac{d_G(v)}{d_G(u)} \right\}$$
+
+in order to promote travel to very crowded areas of the network.
+Leaving this aside, the procedure is identical to the random walk: it starts from a node $v_0\in V$ and, at each step it samples, starting from the current $v_i$ it samples the next $v_{i+1}$ to which it moves and update $V_S = V_S \cup \{v_{i+1}\}$, $E_S = E_S \cup \{\{v_{i}, v_{i+1}\}\}$.
 
 
 ```python
-def frontier_sampling(graph, num_samples,  num_random_walks, force):
- 
+def metropolis_hastings_random_walk_sampling(graph, num_samples, force):
+  
   graph.edge_index = sort_edge_index(graph.edge_index)
   degs = degree(graph.edge_index[0], graph.num_nodes)
   probs = degs / torch.sum(degs)
-  node_samp_ids = np.random.choice(graph.num_nodes, num_random_walks, replace=False, p=probs)
-
-  curr_degs = degs[node_samp_ids].numpy()
-  L = torch.tensor(node_samp_ids)
+  curr_id = np.random.choice(graph.num_nodes, 1, replace=False, p=probs)
+  curr_id = curr_id.item()
   edges = []
   node_ids = np.array([], dtype=int)
-  
-  for n in node_samp_ids:
-    node_ids = np.append(node_ids, n.item())
-    
+  node_ids = np.append(node_ids, curr_id)
   node_dist_dict = {}
   n_it = 0
 
   while len(node_ids) < num_samples:
-    n_it += 1
-
-    curr_probs = curr_degs / np.sum(curr_degs)
-    curr_id = np.random.choice(L, 1, replace=False, p=curr_probs)
-    curr_id = curr_id.item()
-    neighs, _, _, _  = k_hop_subgraph([curr_id],
-                                      1,
-                                      graph.edge_index)
-
+    n_it = n_it + 1
+    neighs, _, _, _  = k_hop_subgraph(torch.tensor([curr_id]),
+                                                     1,
+                                                     graph.edge_index)
     if not curr_id in node_dist_dict:
-      node_dist_dict[curr_id] =  1
+      node_dist_dict[curr_id] = 1
     else:
       node_dist_dict[curr_id] += 1
 
-    mask = neighs != curr_id
-    neighs = neighs[mask]
     neighs_deg = degs[neighs].numpy()
-    neighs_probs = neighs_deg / np.sum(neighs_deg)
-    new_id = np.random.choice(neighs, 1, replace=False, p = neighs_probs)
-    new_id = new_id.item()
-    new_pos = np.where(neighs == new_id)[0].item()
+    probs = np.zeros_like(neighs, dtype=float)
+    curr_pos = np.where(neighs == curr_id)[0].item()
     
+    p_curr = neighs_deg[curr_pos] #degs_dist[int(neighs_deg[curr_pos])]
+    
+    for j in range(len(neighs)):
+      if j != curr_pos:
+        p_neig = neighs_deg[j] #degs_dist[int(neighs_deg[j])]
+        prob = min(1/neighs_deg[j],  1/ neighs_deg[curr_pos]) * min(1, p_neig/p_curr)
+        probs[j] = prob
+
+    probs[curr_pos] = 1 - np.sum(probs)
+    probs = np.clip(probs, 0, None)
+    probs = probs / np.sum(probs)
+
+    new_id = np.random.choice(neighs, 1, p=probs)
+    new_id = new_id.item()
+
     if not force or new_id not in node_ids:
       node_ids = np.append(node_ids, new_id)
 
     edges.append([curr_id, new_id])
-    mask = L.eq(curr_id)
-    L[mask] = new_id
-    curr_degs[mask] = neighs_deg[new_pos].item()
-
+    curr_id = new_id
 
   node_ids = np.unique(node_ids)
   edges = np.unique(np.array(edges), axis=0)
@@ -2109,33 +2386,47 @@ def frontier_sampling(graph, num_samples,  num_random_walks, force):
 
 
 ```python
-num_samples_nodes, _ = num_samples(graph, 0.85)
-fs_graph, node_dist_dict = frontier_sampling(graph, num_samples_nodes, 20, force=True)
+num_samples_nodes, _ = num_samples(graph, 0.7)
+mhrw_graph, node_dist_dict = metropolis_hastings_random_walk_sampling(graph, num_samples_nodes, force=True)
 ```
 
-    922 iterations required to explore  406  different nodes
+    6290 iterations required to explore  812  different nodes
 
 
 
 ```python
-analyze_sampling(fs_graph, "Frontier Sampling", node_dist_dict)
+analyze_sampling(mhrw_graph, "Metropolis-Hastings Random Walk Sampling", node_dist_dict)
 ```
 
-    Number of nodes: 406
-    Number of edges: 1066
+    Number of nodes: 812
+    Number of node features: 1433
+    Number of edges: 2380
     Has isolated nodes: False
     Has self-loops: False
     Is undirected: True
-    Average node degree: 2.63
+    Average node degree: 2.93
     Number of classes: 7
-    Number of connected components: 3
-    Average clustering coefficient: 0.15731
-    Density: 0.00648
-    Transitivity: 0.05169
+    Number of connected components: 1
+    Density: 0.00361
+    Average clustering coefficient: 0.13680
+    Transitivity: 0.15140
 
 
 
 <div>
+<style scoped>
+    .dataframe tbody tr th:only-of-type {
+        vertical-align: middle;
+    }
+
+    .dataframe tbody tr th {
+        vertical-align: top;
+    }
+
+    .dataframe thead th {
+        text-align: right;
+    }
+</style>
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -2153,14 +2444,14 @@ analyze_sampling(fs_graph, "Frontier Sampling", node_dist_dict)
   <tbody>
     <tr>
       <th>0</th>
-      <td>406.0</td>
-      <td>2.63</td>
-      <td>3.94</td>
-      <td>1.0</td>
+      <td>812.0</td>
+      <td>2.93</td>
+      <td>1.82</td>
       <td>1.0</td>
       <td>2.0</td>
-      <td>3.0</td>
-      <td>60.0</td>
+      <td>2.0</td>
+      <td>4.0</td>
+      <td>20.0</td>
     </tr>
   </tbody>
 </table>
